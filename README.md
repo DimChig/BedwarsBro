@@ -1,5 +1,5 @@
 # BedwarsBro
-BedwarsBro is a mod for Minecraft 1.8.9 that adds a bunch of new usefull client-side features!
+BedwarsBro is a mod for Minecraft (version ForgeOptifine 1.8.9) that adds a bunch of new usefull client-side features!
 
 About mod:
 - I have created this mod when i turned 16 years old
