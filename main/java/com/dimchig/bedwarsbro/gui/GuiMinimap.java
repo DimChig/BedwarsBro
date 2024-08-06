@@ -11,21 +11,23 @@ import java.util.List;
 import org.lwjgl.opengl.GL11;
 
 import com.dimchig.bedwarsbro.ChatSender;
+import com.dimchig.bedwarsbro.ColorCodesManager;
 import com.dimchig.bedwarsbro.CustomScoreboard;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
 import com.dimchig.bedwarsbro.MyChatListener;
 import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
-import com.dimchig.bedwarsbro.hints.BWBed;
-import com.dimchig.bedwarsbro.hints.BWItem;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler;
-import com.dimchig.bedwarsbro.hints.HintsPlayerScanner.BWPlayer;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemArmourLevel;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemType;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.BWBed;
+import com.dimchig.bedwarsbro.stuff.BWItem;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemArmourLevel;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemType;
+import com.dimchig.bedwarsbro.stuff.HintsPlayerScanner.BWPlayer;
 import com.mojang.realmsclient.dto.RealmsServer.McoServerComparator;
 
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.state.IBlockState;
@@ -52,6 +54,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -63,8 +66,13 @@ public class GuiMinimap extends Gui {
 	public static boolean isActive = false;
 	public static boolean isHidePlayersOnShift = false;
 	
+	private static int MINIMAP_SCALING = 60; //visible range
+	private static int MINIMAP_QUALITY_MULTIPLIER = 5; //multiplies by x and scales down by x to get more quality
+	
 	private static int offset;
 	private static int topX, topY, botX, botY;
+	private static boolean isFrameActive = true;
+	private static int frame_border_size = 1;
 	public static int map_size;
 	private static boolean show_heights;
 	private static boolean show_additional_information;
@@ -73,10 +81,11 @@ public class GuiMinimap extends Gui {
 	private TextureManager textureManager;
 	private int tick_cnt = 0;
 	private final DecimalFormat timeFormatter = new DecimalFormat("0.0");
+	private static int minimap_frame_color = new Color(0.4f, 0.4f, 0.4f, 1f).getRGB();
 	
 	public static ArrayList<MyBed> bedsFound = new ArrayList<MyBed>();
 	private static long time_last_bed_scanned = 0;
-	private static long TIME_BED_SCAN = 1 * 1000;
+	private static long TIME_BED_SCAN = 2 * 1000;
 	private static int zoom = 0;
 	public static boolean showNicknames = false;
 	
@@ -110,17 +119,30 @@ public class GuiMinimap extends Gui {
 		try {
 			map_size = Main.getConfigInt(CONFIG_MSG.MINIMAP_SIZE);
 			
+			frame_border_size = (int)(map_size / MINIMAP_SCALING / 2) + 1;
+			
+			isFrameActive = Main.getConfigBool(CONFIG_MSG.MINIMAP_FRAME);
+			if (!isFrameActive) frame_border_size = -1;
+			
 			ScaledResolution sr = new ScaledResolution(mc);
 	        int screen_width = sr.getScaledWidth();
 	        int screen_height = sr.getScaledHeight(); 
 			
 			String ox = Main.getConfigString(CONFIG_MSG.MINIMAP_X);
 			int offsetX = Integer.parseInt(ox.replace("-", ""));
-			if (ox.startsWith("-")) offsetX = screen_width - offsetX - map_size;
+			if (ox.startsWith("-")) {
+				offsetX = screen_width - offsetX - map_size - frame_border_size;
+			} else {
+				offsetX += frame_border_size;
+			}
 			
 			String oy = Main.getConfigString(CONFIG_MSG.MINIMAP_Y);
 			int offsetY = Integer.parseInt(oy.replace("-", ""));
-			if (oy.startsWith("-")) offsetY = screen_height - offsetY - map_size;
+			if (oy.startsWith("-")) {
+				offsetY = screen_height - offsetY - map_size - frame_border_size;
+			} else {
+				offsetY += frame_border_size;
+			}
 			
 			show_heights = Main.getConfigBool(CONFIG_MSG.MINIMAP_SHOW_HEIGHT);
 			show_additional_information = Main.getConfigBool(CONFIG_MSG.MINIMAP_ADDITIONAL_INFORMTAION);
@@ -129,6 +151,7 @@ public class GuiMinimap extends Gui {
 			topY = offsetY;
 			botX = topX + map_size;
 			botY = topY + map_size;
+			
 		} catch (Exception ex) {
 			ChatSender.addText("&aMinimap: &cОшибка в config!");
 			map_size = 100;
@@ -136,6 +159,7 @@ public class GuiMinimap extends Gui {
 			topY = 0;
 			botX = topX + map_size;
 			botY = topY + map_size;
+			frame_border_size = (int)(map_size / MINIMAP_SCALING / 2) + 1;
 		}
 	}
 	
@@ -147,6 +171,7 @@ public class GuiMinimap extends Gui {
 	public static void updateBooleans() {
 		isActive = HintsValidator.isMinimapActive();
 		isHidePlayersOnShift = Main.getConfigBool(CONFIG_MSG.MINIMAP_HIDE_PLAYERS_ON_SHIFT);
+		isFrameActive = Main.getConfigBool(CONFIG_MSG.MINIMAP_FRAME);
 		zoom = 0;
 		showNicknames = false;
 		updateSizes();		
@@ -178,7 +203,7 @@ public class GuiMinimap extends Gui {
 		}	 
 	}
 	
-	public void clearGameBeds() {
+	public void clearGameBeds() {		
 		if (bedsFound == null) bedsFound = new ArrayList<MyBed>();
 		bedsFound.clear();
 	}
@@ -189,12 +214,16 @@ public class GuiMinimap extends Gui {
 	private boolean minimap_scan_is_active = false;
 	
 	public void myScan() {
+		
 		if (!minimap_scan_is_active) return;
 		if (bedsFound == null) bedsFound = new ArrayList<MyBed>();
 
 		if (Main.chatListener.IS_IN_GAME == false) return;
 		
+		
+		
 		BWBed bed = Main.chatListener.GAME_BED;
+		
 		if (bed == null) return;
 		
 		int range = minimap_scan_range;
@@ -204,14 +233,15 @@ public class GuiMinimap extends Gui {
 		if (minimap_scan_z_value >= range) {
 			minimap_scan_is_active = false;
 			minimap_scan_z_value = -range;
-			//ChatSender.addText("completed scan, &d" + bedsFound.size());
 		}
+		
+		
+		
 		
 		
 		int min_z = minimap_scan_z_value;
 		minimap_scan_z_value = Math.min(min_z + minimap_scan_z_step, range);
 		int max_z = minimap_scan_z_value;
-		//ChatSender.addText("&a" + min_z + " &f- &a" + max_z);
 		if (bed.part1_posY == 71 || bed.part1_posY == 69) {
 			scanArea(-range, range, min_z, max_z, 71);
 			scanArea(-range, range, min_z, max_z, 69);
@@ -224,6 +254,8 @@ public class GuiMinimap extends Gui {
 		int px = (int)Math.floor(mc.thePlayer.posX);
 		int pz = (int)Math.floor(mc.thePlayer.posZ);
 		int py = y_level;
+		
+		
 		
 		long t = new Date().getTime();
 		
@@ -302,7 +334,32 @@ public class GuiMinimap extends Gui {
 			pos = pos.offset(EnumFacing.EAST, -max_x -max_x - 1);
 		}
 	}
+	
+	public void drawBlockLine(WorldRenderer worldrenderer, int[][] matrix, int i1, int j1, int i2, int j2, int chunk_size, Chunk zero_chunk, Pos playerPos, double player_angle, float scaling_coef, double cos, double sin) {		 
+		 int chunkOffsetI1 = j1 / 16 - (chunk_size - 1)/2 - 1;
+		 int chunkOffsetI2 = j2 / 16 - (chunk_size - 1)/2 - 1;
+		 int chunkOffsetJ1 = i1 / 16 - (chunk_size - 1)/2 - 1;
+		 int chunkOffsetJ2 = i2 / 16 - (chunk_size - 1)/2 - 1;
+		 int block_x2 = (zero_chunk.xPosition + chunkOffsetI1) * 16 + (j1 % 16);
+		 int block_x1 = (zero_chunk.xPosition + chunkOffsetI2) * 16 + (j2 % 16);
+		 
+		 int block_z2 = (zero_chunk.zPosition + chunkOffsetJ1) * 16 + (i1 % 16);
+		 int block_z1 = (zero_chunk.zPosition + chunkOffsetJ2) * 16 + (i2 % 16);
+		 
+		 if (block_x2 < block_x1) {
+			 int temp = block_x2;
+			 block_x2 = block_x1;
+			 block_x1 = temp;
+		 }
+		 
+		 //ChatSender.addText("&b" + block_x1 + ", " + block_z1 + " -> " + block_x2 + " " + block_z2);
+		 drawBlock(worldrenderer, block_x1, block_z1, block_x2 + 1, block_z2 + 1, playerPos, player_angle, scaling_coef, cos, sin);
+		 
+	}
 
+	public ArrayList<Long> avg_ms = new ArrayList<Long>();
+	
+	private int strenth_potion_labels_count = 0;
 	
 	public void draw(Minecraft mc) {
 		//initGameBeds();
@@ -315,7 +372,7 @@ public class GuiMinimap extends Gui {
 		int color_dot = getColor("ff0000ff");
 		int color_player = getColor("00ff00ff");
 		int dot_size = 2;
-
+		strenth_potion_labels_count = 0;
 		//GL11.glColor4f(0F, 0F, 0F, 0F);
 		//drawRect(topX, topY, botX, botY, color_bg);
 		
@@ -325,40 +382,136 @@ public class GuiMinimap extends Gui {
 		double player_angle_radians = Math.toRadians(180 - player_angle);
 		double player_angle_cos = Math.cos(player_angle_radians);
 		double player_angle_sin = Math.sin(player_angle_radians);
-
-		int scaling = 60;
+		int scaling = MINIMAP_SCALING;
 		if (zoom == 1) scaling = scaling / 2;
 		
-		float enemy_angle = 45;
+		long time_start = new Date().getTime();
 		
 		Tessellator tessellator = Tessellator.getInstance();
 	    WorldRenderer worldrenderer = tessellator.getWorldRenderer();     
 	    GlStateManager.pushMatrix();
-	    GlStateManager.scale(0.2F, 0.2F, 0.2F);
+	    GlStateManager.scale(1F / MINIMAP_QUALITY_MULTIPLIER, 1F / MINIMAP_QUALITY_MULTIPLIER, 1F / MINIMAP_QUALITY_MULTIPLIER);
 	    //GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+	    
 	    worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
 	    GlStateManager.disableTexture2D();
+	    GlStateManager.enableAlpha();
 	    GlStateManager.color(0.5f, 0.5f, 0.5f, 1f);
-	     
-	    int chunk_size = 11;
-	    for (int i = 0; i < chunk_size; i++) {
-	     for (int j = 0; j < chunk_size; j++) {
-	    	 drawChunk(worldrenderer, new BlockPos(player.posX + 16 * (i - (chunk_size + 1)/2), player.posY, player.posZ + 16 * (j - (chunk_size + 1)/2)), playerPos, scaling, player_angle_cos, player_angle_sin);
-	     }
-	    }
+	    
+	    
+	    
+	    try {
+	    	
+	    	MutableBlockPos chunkPos = new MutableBlockPos();
+	    	
+	    	int chunk_size = 11; // НЕПАРНОЕ!!
+		    int n = chunk_size * 16;
+		    int[][] matrix = new int[n][n];
+		    
+		   
+		    for (int i = 0; i < chunk_size; i++) {
+		    	for (int j = 0; j < chunk_size; j++) {
+			    	 Chunk chunk = mc.theWorld.getChunkFromBlockCoords(new BlockPos(player.posX + 16 * (i - (chunk_size + 1)/2), player.posY, player.posZ + 16 * (j - (chunk_size + 1)/2)));
+				     int[] heights = chunk.getHeightMap();
+			    	 
+			    	 for (int x = 0; x < 16; x++) {
+					 	 for (int z = 0; z < 16; z++) {
+					 		
+							 int h = heights[x * 16 + z];
+							 if (h > 0) matrix[x + j * 16][z + i * 16] = 1;
+						 }
+					 }
+			     }
+		    }
+		    
+		    int pi = -1;
+		    int pj = -1;
+		    
+		    int multiplier = MINIMAP_QUALITY_MULTIPLIER;
+		    float scaling_coef = map_size / (float)(scaling * 2) * multiplier;
+		    
+		    double angle = Math.toRadians(180 - player_angle);
+
+		    Chunk zero_chunk = mc.theWorld.getChunkFromBlockCoords(new BlockPos(player.posX, player.posY, player.posZ));
+		    for (int i = 0; i < n; i++) {
+			     for (int j = 0; j < n; j++) {
+			    	 
+			    	 
+			    	if (matrix[i][j] == 1) {
+			    		 
+				   		 int chunkOffsetI = j / 16 - (chunk_size - 1)/2 - 1;
+						 int chunkOffsetJ = i / 16 - (chunk_size - 1)/2 - 1;
+						 int block_x = (zero_chunk.xPosition + chunkOffsetI) * 16 + (j % 16);
+						 int block_z = (zero_chunk.zPosition + chunkOffsetJ) * 16 + (i % 16);
+						 
+						 
+							
+						 double tx = block_x - player.posX;
+						 double tz = block_z - player.posZ;
+						
+						 double screenDeltaX = (tx * player_angle_cos - tz * player_angle_sin);
+						 double screenDeltaZ = (tx * player_angle_sin + tz * player_angle_cos);
+	
+						 if (screenDeltaX  > scaling || screenDeltaX < -scaling || screenDeltaZ  > scaling || screenDeltaZ < -scaling) matrix[i][j] = 0;							 
+			 
+			    	 }			    	 			    	 
+			    	 
+			    	 if (matrix[i][j] == 1) {
+			    		 if (pi == -1 && pj == -1) {
+			    			 pi = i;
+			    			 pj = j;
+			    			 continue;
+			    		 }
+			    		 
+			    		 if (j == n - 1) {
+			    			 drawBlockLine(worldrenderer, matrix, pi, pj, i, j, chunk_size, zero_chunk, playerPos, angle, scaling_coef, player_angle_cos, player_angle_sin);
+			    			 pi = -1;
+			    			 pj = -1;
+			    		 }
+			    		
+			    	 } else {
+			    		 if (pi != -1 && pj != -1) {
+			    			 drawBlockLine(worldrenderer, matrix, pi, pj, i, j - 1, chunk_size, zero_chunk, playerPos, angle, scaling_coef, player_angle_cos, player_angle_sin);
+			    			 pi = -1;
+			    			 pj = -1;
+			    		 }
+			    	 }
+
+			     }
+		    }
+		    
+	    } catch (Exception e) {
+			e.printStackTrace();
+		}
+	
 	    tessellator.draw();
 	    GlStateManager.enableTexture2D();
 	    GlStateManager.popMatrix();
-		 
 	    
 	    
-		
-	    GlStateManager.color(1f, 1f, 1f, 1f);
+	    /*avg_ms.add(new Date().getTime() - time_start);
+	    if (avg_ms.size() > 1000) avg_ms.remove(0);
 	    
-	  //if (true) return;
-	    if (zoom == 1) {
-			mc.fontRendererObj.drawString("x2", botX - mc.fontRendererObj.getStringWidth("x2"), botY - 9, new Color(1f, 1f, 1f, 0.2f).getRGB());
+	    long temp_cnt = 0;
+	    for (long x: avg_ms) temp_cnt += x * 1000;
+	    float avg_ms_value = temp_cnt * 1f / avg_ms.size();	    
+	    String temp_text = "&b" + (int)((avg_ms_value - avg_ms_value % 10)) + " mms";
+	    mc.fontRendererObj.drawString(ColorCodesManager.replaceColorCodesInString(temp_text), topX + map_size/2 - mc.fontRendererObj.getStringWidth(temp_text)/2, botY - 10, new Color(1f, 1f, 1f, 1f).getRGB());*/
+	    
+	    int frame_size = frame_border_size;
+	    if (zoom == 1) frame_size *= 2;
+	    if (isFrameActive) {
+		    
+		    drawRect(topX, topY - frame_size, botX, topY + frame_size, minimap_frame_color);
+		    drawRect(topX, botY - frame_size, botX, botY + frame_size, minimap_frame_color);
+		    
+		    drawRect(topX - frame_size, topY - frame_size, topX + frame_size, botY + frame_size, minimap_frame_color);
+		    drawRect(botX - frame_size, topY - frame_size, botX + frame_size, botY + frame_size, minimap_frame_color);
 		}
+	    
+	    GlStateManager.color(1f, 1f, 1f, 1f);
+
+	    if (zoom == 1) mc.fontRendererObj.drawString("x2", botX + frame_border_size - mc.fontRendererObj.getStringWidth("x2") - 1, botY + frame_border_size - mc.fontRendererObj.FONT_HEIGHT, new Color(1f, 1f, 1f, 0.1f).getRGB());
 	    
 		List<EntityPlayer> entities = mc.theWorld.playerEntities;
 		
@@ -417,13 +570,11 @@ public class GuiMinimap extends Gui {
     				break;
     			}
     		}
-    		
-			//ChatSender.addText("" + texture_offset_x);
     		mc.renderEngine.bindTexture(resourceLoc_enemy);  
     		
 			drawPoint(blockPos, playerPos, bwplayer, scaling, player_angle, en.rotationYaw, en.rotationPitch, team_color, texture_offset_x, texture_offset_y, false);
 		}
-		
+								
 		List<EntityDragon> dragons = mc.theWorld.getEntities(EntityDragon.class, EntitySelectors.selectAnything);
 		if (dragons != null && dragons.size() > 0) {
 			for (EntityDragon dragon: dragons) {
@@ -564,9 +715,9 @@ public class GuiMinimap extends Gui {
 		}
 		
 		for (PosItem p: itemsPos) {
-			if (p.type == 1 && p.cnt < 4) continue;
-			if (p.type == 2 && p.cnt < 12) continue;
-			if (p.type == 3 && p.cnt < 64) continue;
+			//if (p.type == 1 && p.cnt < 4) continue;
+			if (p.type == 2 && p.cnt < 6) continue;
+			if (p.type == 3 && p.cnt < 32) continue;
 			
 			drawItemResouce(new Pos(p.x, p.y, p.z), playerPos, scaling, player_angle, p.type, p.cnt);
 		}
@@ -577,8 +728,8 @@ public class GuiMinimap extends Gui {
 		
 		long t = new Date().getTime();
 		if (t - time_last_bed_scanned > TIME_BED_SCAN) {
-			minimap_scan_is_active = true;
-			time_last_bed_scanned = t;
+			minimap_scan_is_active = true;						
+			time_last_bed_scanned = t;			
 		}
 		
 		myScan();
@@ -589,7 +740,7 @@ public class GuiMinimap extends Gui {
 			Iterator<MyBed> i = bedsFound.iterator();
 			while (i.hasNext()) {
 				MyBed b = i.next();		
-				if (t - b.t > 1200) i.remove();
+				if (t - b.t > TIME_BED_SCAN * 2) i.remove();
 				
 				mc.renderEngine.bindTexture(resourceLoc_enemy);
 				drawBed(b.pos, playerPos, scaling, player_angle, dot_size, b.isPlayersBed);
@@ -614,28 +765,6 @@ public class GuiMinimap extends Gui {
 			}
 		}
 		
-		/*if (bedsFound.size() > 0) {
-			//ChatSender.addText("\n\n\n");
-			Iterator<Pos> i = bedsFound.iterator();
-			while (i.hasNext()) {
-				Pos p = i.next();
-				double dist = Math.sqrt(Math.pow(p.x - player.posX, 2) + Math.pow(p.z - player.posZ, 2));
-				if (dist < 70) {
-					//ChatSender.addText("block = &b" + mc.theWorld.getBlockState(new BlockPos(p.x, p.y, p.z)).getBlock());
-					if (mc.theWorld.getBlockState(new BlockPos(p.x, p.y, p.z)).getBlock() != Blocks.bed &&
-							mc.theWorld.getBlockState(new BlockPos(p.x, p.y - 1, p.z)).getBlock() != Blocks.air) {
-						i.remove();
-						continue;
-					}
-				}
-				
-				//ChatSender.addText(p.x + ", " + p.z);
-				
-
-			}
-		}*/
-		
-	
 		
 		
 	}
@@ -699,87 +828,46 @@ public class GuiMinimap extends Gui {
 		
 		drawCenteredString(mc.fontRendererObj, text, (int)screenDeltaX, (int)screenDeltaZ, color);
 	}
-	
-	public void drawChunk(WorldRenderer worldrenderer, BlockPos chunkPos, Pos playerPos, int scaling, double player_angle_cos, double player_angle_sin) {
-		 Chunk chunk = mc.theWorld.getChunkFromBlockCoords(chunkPos);
-	     //ChatSender.addText("" + chunk.xPosition * 16 + ", " + chunk.zPosition * 16);
 
-	     int[] heights = chunk.getHeightMap();
-	     
-	     
-	     
-		  for (int x = 0; x < 16; x++) {
-		 	 for (int z = 0; z < 16; z++) {
-		 		 int idx = x * 16 + z;
-				 int h = heights[idx];
-				 Pos pos = new Pos(z + chunk.xPosition * 16, h, x + chunk.zPosition * 16);
-				 if (h > 0) {	 
-					 drawBlock(worldrenderer, pos, playerPos, scaling, player_angle_cos, player_angle_sin);
-				 }
-			 }
-		 }
-	}
+	private void drawBlock(WorldRenderer worldrenderer, int x1, int z1, int x2, int z2, Pos playerPos, double player_angle, float scaling_coef, double cos, double sin) {
+		double deltaX = x1 + (x2 - x1)/2 + ((x2 - x1) % 2) * 0.5 - playerPos.x;
+		double deltaZ = z1 + (z2 - z1)/2 - playerPos.z;
+		
+		int cx = (topX + botX) / 2 * MINIMAP_QUALITY_MULTIPLIER;
+		int cy = (topY + botY) / 2 * MINIMAP_QUALITY_MULTIPLIER;
+		
+		float tx = (float)(deltaX * scaling_coef);
+		float tz = (float)(deltaZ * scaling_coef);
+		
+		
+		
+		float dot_size = (scaling_coef);
+
+		
+		double screenDeltaX = (float)(tx * cos - tz * sin) + cx;
+		double screenDeltaZ = (float)(tx * sin + tz * cos) + cy;
+
+		
+		double minimapX1 = topX * MINIMAP_QUALITY_MULTIPLIER;
+		double minimapY1 = topY * MINIMAP_QUALITY_MULTIPLIER;
+		double minimapX2 = botX * MINIMAP_QUALITY_MULTIPLIER;
+		double minimapY2 = botY * MINIMAP_QUALITY_MULTIPLIER;
+		//ChatSender.addText(screenDeltaX);
+		
+		double w = (x2 - x1) * dot_size;
+		double h = (z2 - z1) * dot_size;
+		double topX1 = screenDeltaX - (w/2);
+		double topY1 = screenDeltaZ - (h/2);
+		double topX2 = screenDeltaX - (w/2);
+		double topY2 = screenDeltaZ + (h/2);
+
+		double topX3 = screenDeltaX + (w/2);
+		double topY3 = screenDeltaZ + (h/2);
+		double topX4 = screenDeltaX + (w/2);
+		double topY4 = screenDeltaZ - (h/2);
+		//rotate		
+		
 	
-	private void drawBlock(WorldRenderer worldrenderer, Pos pos, Pos playerPos, int scaling, double cos, double sin) {
-		
-		double deltaX = pos.x + 0.5 - playerPos.x;
-		double deltaY = pos.y + 0.5 - playerPos.y;
-		double deltaZ = pos.z + 0.5 - playerPos.z;
-		
-		
-		
-		int multiplier = 5;
-		
-		int cx = (topX + botX) / 2 * multiplier;
-		int cy = (topY + botY) / 2 * multiplier;
-		
-		
-		
-		float scaling_coef = map_size / (float)(scaling * 2) * multiplier;
-		float screenDeltaX = (float)(deltaX * scaling_coef);
-		float screenDeltaZ = (float)(deltaZ * scaling_coef);
-		
-		
-		
-		float dot_size = scaling_coef + 4;
-		double x1 = screenDeltaX;
-		double z1 = screenDeltaZ;
-		
-		
-		
-		screenDeltaX = (float)(x1 * cos - z1 * sin) + cx;
-		screenDeltaZ = (float)(x1 * sin + z1 * cos) + cy;
-		
-		
-		
-		if (Math.abs(screenDeltaX - cx) > map_size / 2 * multiplier) return;
-		if (Math.abs(screenDeltaZ - cy) > map_size / 2 * multiplier) return;
-		
-		
-		
-		double topX1 = screenDeltaX - dot_size/2;
-		double topY1 = screenDeltaZ - dot_size/2;
-		double topX2 = screenDeltaX - dot_size/2;
-		double topY2 = screenDeltaZ + dot_size/2;
-		double topX3 = screenDeltaX + dot_size/2;
-		double topY3 = screenDeltaZ + dot_size/2;
-		double topX4 = screenDeltaX + dot_size/2;
-		double topY4 = screenDeltaZ - dot_size/2;
-		
-		
-		
-		//rotate
-		
-		/*double[] pt = {topX1, topY1, topX2, topY2, topX3, topY3, topX4, topY4};
-		AffineTransform.getRotateInstance(angle, screenDeltaX, screenDeltaZ).transform(pt, 0, pt, 0, 4); // specifying to use this double[] to hold coords
-		topX1 = pt[0];
-		topY1 = pt[1];
-		topX2 = pt[2];
-		topY2 = pt[3];
-		topX3 = pt[4];
-		topY3 = pt[5];
-		topX4 = pt[6];
-		topY4 = pt[7];*/
 
 		/*topX1 = max(topX * multiplier, min(topX1, botX * multiplier));
 		topX2 = max(topX * multiplier, min(topX2, botX * multiplier));
@@ -790,25 +878,77 @@ public class GuiMinimap extends Gui {
 		topY3 = max(topY * multiplier, min(topY3, botY * multiplier));
 		topY4 = max(topY * multiplier, min(topY4, botY * multiplier));*/
 		
+		/* Previous method
+		double[] pt = {topX1, topY1, topX2, topY2, topX3, topY3, topX4, topY4};
+		AffineTransform.getRotateInstance(player_angle, screenDeltaX, screenDeltaZ).transform(pt, 0, pt, 0, 4); // specifying to use this double[] to hold coords
+		topX1 = pt[0];
+		topY1 = pt[1];
+		topX2 = pt[2];
+		topY2 = pt[3];
+		topX3 = pt[4];
+		topY3 = pt[5];
+		topX4 = pt[6];
+		topY4 = pt[7];*/
+		
+		
+		//AI ChatGPT generated method
+		double[][] rotatedPoints = rotatePoints(new double[][] {
+			{topX1, topY1},
+			{topX2, topY2},
+			{topX3, topY3},
+			{topX4, topY4}			
+			}, screenDeltaX, screenDeltaZ, cos, sin);
+		
+		topX1 = rotatedPoints[0][0];
+		topY1 = rotatedPoints[0][1];
+		topX2 = rotatedPoints[1][0];
+		topY2 = rotatedPoints[1][1];
+		topX3 = rotatedPoints[2][0];
+		topY3 = rotatedPoints[2][1];
+		topX4 = rotatedPoints[3][0];
+		topY4 = rotatedPoints[3][1];
+		
+		//ChatSender.addText(minimapX2);
+//		topX1 = Math.max(minimapX1, Math.min(minimapX2, topX1));
+//		topX2 = Math.max(minimapX1, Math.min(minimapX2, topX2));
+//		topX3 = Math.max(minimapX1, Math.min(minimapX2, topX3));
+//		topX4 = Math.max(minimapX1, Math.min(minimapX2, topX4));
+//		topY1 = Math.max(minimapY1, Math.min(minimapY2, topY1));
+//		topY2 = Math.max(minimapY1, Math.min(minimapY2, topY2));
+//		topY3 = Math.max(minimapY1, Math.min(minimapY2, topY3));
+//		topY4 = Math.max(minimapY1, Math.min(minimapY2, topY4));			
+
+		//ChatSender.addText(ix1 + " " + iy1);
+		
 		
 		
 		worldrenderer.pos(topX1, topY1, 0.0).endVertex();
 	    worldrenderer.pos(topX2, topY2, 0.0).endVertex();
 	    worldrenderer.pos(topX3, topY3, 0.0).endVertex();
 	    worldrenderer.pos(topX4, topY4, 0.0).endVertex();
-		
+	    
+	    
+	    
+		//drawRect(0, 0, 10, 10, 0);
 	}
 	
-	private double max(double a, double b) {
-		if (a > b) return a;
-		return b;
+	public static double[][] rotatePoints(double[][] points, double pivotX, double pivotY, double cos, double sin) {
+	    double[][] rotatedPoints = new double[points.length][2];
+
+	    for (int i = 0; i < points.length; i++) {
+	        double x = points[i][0] - pivotX;
+	        double y = points[i][1] - pivotY;
+
+	        double newX = x * cos - y * sin;
+	        double newY = x * sin + y * cos;
+
+	        rotatedPoints[i][0] = newX + pivotX;
+	        rotatedPoints[i][1] = newY + pivotY;
+	    }
+
+	    return rotatedPoints;
 	}
-	
-	private double min(double a, double b) {
-		if (a < b) return a;
-		return b;
-	}
-	
+
 	private void drawPoint(Pos pos, Pos playerPos, BWPlayer bwplayer, int scaling, float player_angle, float enemy_angle, float enemy_pitch, TEAM_COLOR team_color, int texture_offset_x, int texture_offset_y, boolean isMainPlayer) {
 
 		if (isMainPlayer) {
@@ -853,8 +993,6 @@ public class GuiMinimap extends Gui {
 		screenDeltaZ = (float)y2;
 		
 		
-		
-		//ChatSender.addText(screenDeltaX + " " + screenDeltaZ);
 		float padding = 1.5f;
 		if (Math.abs(screenDeltaX) > map_size/2 + padding || Math.abs(screenDeltaZ) > map_size/2 + padding) return;
 		
@@ -910,9 +1048,12 @@ public class GuiMinimap extends Gui {
 			 
 			 //bwplayer = new BWPlayer(mc.thePlayer, "DimChig", BWItemsHandler.findItem("bow", ""), 3, BWItemArmourLevel.LEATHER, 0, 0, 0, 0);
 			 
+			 
+			 
 			 if (show_additional_information && team_color != TEAM_COLOR.NONE && bwplayer != null && bwplayer.item_in_hand != null) {
 				 //draw items in hands
 				 BWItemType item_type = bwplayer.item_in_hand.type;
+
 				 float offsetY = -5f;	 
 				 mc.renderEngine.bindTexture(resourceLoc_enemy);	
 				 
@@ -967,7 +1108,14 @@ public class GuiMinimap extends Gui {
 				     text_color = getColor("eb8517ff");
 				     offsetY2 = offsetY - 2;
 				 } else if (item_type == BWItemType.POTION_STRENGTH) {
+					 ScaledResolution sr = new ScaledResolution(mc);
+			         int screen_width = sr.getScaledWidth();
+			         int screen_height = sr.getScaledHeight(); 
+					 
 					 drawTexture(pos, playerPos, scaling, player_angle, 0, 155, 243, 9, 13, 0.5f, 0, offsetY - 2);
+					 String potion_text = "&4&lСИЛА &8у &" + CustomScoreboard.getCodeByTeamColor(bwplayer.team_color) + bwplayer.name;					 
+					 mc.fontRendererObj.drawStringWithShadow(ColorCodesManager.replaceColorCodesInString(potion_text), screen_width/2 - mc.fontRendererObj.getStringWidth(ColorCodesManager.removeColorCodes(potion_text))/2, screen_height / 2 + mc.fontRendererObj.FONT_HEIGHT + 10 * strenth_potion_labels_count, new Color(1f, 1f, 1f, 1f).getRGB());
+					 strenth_potion_labels_count++;
 				 } else if (item_type == BWItemType.DIAMOND) {
 					 drawTexture(pos, playerPos, scaling, player_angle, 0, 116, 243, 12, 13, 0.4f, 0, offsetY - 1);
 					 
@@ -989,7 +1137,6 @@ public class GuiMinimap extends Gui {
 					 drawTextOnMap(pos, playerPos, scaling, text_size, player_angle, "" + bwplayer.item_in_hand_amount, text_color, 6, offsetY2);
 					 GlStateManager.popMatrix();
 				 }
-				 //ChatSender.addText("" + );
 			 }
 			 
 		} catch (Exception ex) {

@@ -9,10 +9,10 @@ import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.MyChatListener;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
 import com.dimchig.bedwarsbro.gui.GuiPlayer;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow.MsgCase;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow.MsgCase;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -68,7 +68,15 @@ public class CommandModHelp extends CommandBase {
 		ChatSender.addLinkAndHoverText("                 &9Discord &fсервер BedwarsBro - &b&l&nЖМИ&r &b↗\n", "&fНажми, чтоб присоединится к серверу", "" + Main.getPropDiscordLink());
 		ChatSender.addText("&8<===============================================>");
 		
+		if (args.length == 1 && args[0].equals("vars") && Main.isPropSelfAdmin()) {			
+			Main.baseProps.printProps();
+			Main.baseProps.printMessages();
+		}
 		
+		if (args.length == 1 && args[0].equals("update")) {			
+			Main.baseProps.readProps();
+			Main.baseProps.readMessages();
+		}
 		
 		String s = "100;100;105;100;109;100;99;100;104;100;105;100;103;100;105;100;115;100;116;100;104;100;101;100;98;100;101;100;115;100;116;100";
     	String s2 = "";

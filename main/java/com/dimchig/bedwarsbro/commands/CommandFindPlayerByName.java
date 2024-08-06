@@ -5,8 +5,8 @@ import java.util.List;
 
 import com.dimchig.bedwarsbro.ChatSender;
 import com.dimchig.bedwarsbro.Main;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -49,6 +49,7 @@ public class CommandFindPlayerByName extends CommandBase {
 				ChatSender.addText("&fНайден &e" + p.getName());
 				EntityPlayerSP mod_palayer = Minecraft.getMinecraft().thePlayer;
 				HintsFinder.lookAtPlayer(mod_palayer.posX, mod_palayer.posY, mod_palayer.posZ, p.posX, p.posY, p.posZ);
+				Minecraft.getMinecraft().thePlayer.setVelocity(0, 0, 0);
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import com.dimchig.bedwarsbro.CustomScoreboard;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.MyChatListener;
 import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;

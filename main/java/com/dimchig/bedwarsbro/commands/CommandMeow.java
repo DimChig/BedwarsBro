@@ -7,11 +7,11 @@ import com.dimchig.bedwarsbro.ChatSender;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.MyChatListener;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow.MsgCase;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow.MsgCase;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -72,8 +72,10 @@ public class CommandMeow extends CommandBase {
 		ChatSender.addClickText("&7• &fСообщения после &cкила", starting + "kill");
 		ChatSender.addClickText("&7• &fСообщения после &eфинального кила", starting + "final_kill");
 		ChatSender.addClickText("&7• &fСообщения после &6смерти", starting + "death");
+		ChatSender.addClickText("&7• &fСообщения после &cпадении в бездну", starting + "death_void");
 		ChatSender.addClickText("&7• &fСообщения после &aкровати &7(одиночные)", starting + "bed_single");
 		ChatSender.addClickText("&7• &fСообщения после &aкровати &7(командные)", starting + "bed_multi");
+		ChatSender.addClickText("&7• &fСообщения после &aкровати &7(тебе сломали)", starting + "bed_own");
 		ChatSender.addClickText("&7• &fСообщения в &bначале игры", starting + "game_start");
 		ChatSender.addClickText("&7• &fСообщения при &dпобеде", starting + "win");
 		ChatSender.addText(     "");
@@ -118,10 +120,14 @@ public class CommandMeow extends CommandBase {
 					ChatSender.addText(prefix + "Сообщения после &bФИНАЛЬНОГО КИЛА:&f\n" + Main.bedwarsMeow.getMeows(MsgCase.FINAL_KILL));
 				} else if (c.equals("death")) {
 					ChatSender.addText(prefix + "Сообщения после &bСМЕРТИ:&f\n" + Main.bedwarsMeow.getMeows(MsgCase.DEATH));
+				} else if (c.equals("death_void")) {
+					ChatSender.addText(prefix + "Сообщения после &bПАДЕНИЯ В БЕЗДНУ:&f\n" + Main.bedwarsMeow.getMeows(MsgCase.DEATH_VOID));
 				} else if (c.equals("bed_single")) {
 					ChatSender.addText(prefix + "Сообщения про &bКРОВАТЬ &e(одиночный режим):&f\n" + Main.bedwarsMeow.getMeows(MsgCase.BED_SINGLE));
 				} else if (c.equals("bed_multi")) {
 					ChatSender.addText(prefix + "Сообщения про &bКРОВАТЬ &e(командный режим):&f\n" + Main.bedwarsMeow.getMeows(MsgCase.BED_MULTI));
+				} else if (c.equals("bed_own")) {
+					ChatSender.addText(prefix + "Сообщения про &bКРОВАТЬ &e(тебе сломали):&f\n" + Main.bedwarsMeow.getMeows(MsgCase.BED_OWN));
 				} else if (c.equals("win")) {
 					ChatSender.addText(prefix + "Сообщения после &bВЫЙГРАША:&f\n" + Main.bedwarsMeow.getMeows(MsgCase.WIN));
 				} else if (c.equals("game_start")) {

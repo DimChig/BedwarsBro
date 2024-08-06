@@ -8,19 +8,19 @@ import java.util.List;
 import java.util.Random;
 
 import com.dimchig.bedwarsbro.commands.CommandFindPlayerByName;
-import com.dimchig.bedwarsbro.hints.BWItem;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.HintsItemTracker;
-import com.dimchig.bedwarsbro.hints.HintsPlayerScanner;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
-import com.dimchig.bedwarsbro.hints.LobbyBlockPlacer;
-import com.dimchig.bedwarsbro.hints.WinEmote;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemArmourLevel;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemColor;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemToolLevel;
-import com.dimchig.bedwarsbro.hints.HintsPlayerScanner.BWPlayer;
 import com.dimchig.bedwarsbro.particles.ParticleTrail;
+import com.dimchig.bedwarsbro.stuff.BWItem;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsItemTracker;
+import com.dimchig.bedwarsbro.stuff.HintsPlayerScanner;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.LobbyBlockPlacer;
+import com.dimchig.bedwarsbro.stuff.WinEmote;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemArmourLevel;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemColor;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemToolLevel;
+import com.dimchig.bedwarsbro.stuff.HintsPlayerScanner.BWPlayer;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -30,11 +30,13 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EntitySelectors;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -50,9 +52,10 @@ public class OnMyTickEvent {
 	public static boolean isHintsRadarPlayersActive = false;
 	public static boolean isDangerAlertActive = false;
 	public static boolean isHintsItemCounterActive = false;
+	public static boolean isHintsBlockCounterActive = false;
 	public static boolean isBetterShopActive = false;
 	public static boolean isWinEmoteActive = false;
-	public static boolean isParticleTrailActive = false;
+	public static boolean isParticleTrailActive = false;	
 	
 	
 	public static int SCANNER_FREQUENCY = 10;
@@ -60,7 +63,6 @@ public class OnMyTickEvent {
 	public static boolean FINDER_IS_SEARCH_LOOP = false;
 	public static String FIND_PLAYER_COMMAND_SEARCH = "";
 	public static long FIND_PLAYER_COMMAND_SEARCH_TIME = 0;
-	public static long time_bwmanipulator_cant_sneak = -1;
 	Minecraft mc;
 	private KeyBinding keyTab;
 	public static GuiScreen gui2open = null;
@@ -77,13 +79,14 @@ public class OnMyTickEvent {
 		this.isHintsRadarPlayersActive = HintsValidator.isHintsRadarPlayersActive();
 		this.isDangerAlertActive = HintsValidator.isDangerAlertActive();
 		this.isHintsItemCounterActive = HintsValidator.isItemCounterActive();
+		this.isHintsBlockCounterActive = HintsValidator.isBlockCounterActive();
 		this.isBetterShopActive = HintsValidator.isBetterShopActive();
 		this.isWinEmoteActive = HintsValidator.isWinEmoteActive();
 		this.isParticleTrailActive = HintsValidator.isParticleTrailActive();
-		if (this.isHintsItemCounterActive == false) {
-			Main.guiOnScreen.setDiamonds(-1);
-			Main.guiOnScreen.setEmeralds(-1);
-		}
+		
+		Main.guiOnScreen.setDiamonds(-1);
+		Main.guiOnScreen.setEmeralds(-1);
+		Main.guiOnScreen.setBlocks(-1);
 		
 		key_lclick = mc.gameSettings.keyBindAttack;
 		key_rclick = mc.gameSettings.keyBindUseItem;
@@ -101,19 +104,22 @@ public class OnMyTickEvent {
 		return scanned_players;
 	}
 	
+	public int zeroDeathHandlerRejoinVar = 0;
+	
 	@SubscribeEvent
 	public void playerTick(TickEvent.ClientTickEvent event){
 		if (mc == null) return; 
 		if (mc.thePlayer == null) return; 
-		//if (true) return;
 		
-		/*myfps.add(mc.getDebugFPS());
-		if (myfps.size() > 300) myfps.remove(0);
-		
-		double avg_fps = 0;
-		for (int x: myfps) avg_fps += x;
-		avg_fps /= 300;*/
-		
+//		if (false) {
+//			myfps.add(mc.getDebugFPS());
+//			if (myfps.size() > 40) myfps.remove(0);
+//			
+//			double avg_fps = 0;
+//			for (int x: myfps) avg_fps += x;
+//			avg_fps /= 40;
+//			//ChatSender.addText("" + (int)(avg_fps));
+//		}
 
 		String s = Main.scoreboardManager.readRawScoreboard();
 		if (s != null && s.length() >= 0) {
@@ -129,6 +135,7 @@ public class OnMyTickEvent {
 			gui2open = null;
 		}
 		
+
 		Main.shopManager.scan(isBetterShopActive);
 		
 		if (MyChatListener.IS_IN_GAME) {
@@ -143,36 +150,36 @@ public class OnMyTickEvent {
 				Main.generatorTimers.onTick();
 				
 				Main.takeMaxSlotBlocks.handle();
+				
+				
 			}
+			
+			Main.zeroDeathHandler.scan();
 			
 			Main.bedAutoTool.handleTools();
 			
-			if (isHintsItemCounterActive) Main.itemTracker.scan();
+			if (isHintsItemCounterActive || isHintsBlockCounterActive) Main.itemTracker.scan();
 			
 			
 			if (FINDER_IS_SEARCH_LOOP) {
 				HintsFinder.findAll(false);
 			}
-			
-			
-			if (time_bwmanipulator_cant_sneak > 0) {
-				long t = new Date().getTime();
-				if (time_bwmanipulator_cant_sneak > t) {					
-					KeyBinding key = Minecraft.getMinecraft().gameSettings.keyBindSneak;
-		        	key.setKeyBindState(key.getKeyCode(), false);
-				} else {
-					time_bwmanipulator_cant_sneak = -1;
-				}
-			}
-			
+						
 		} else {
 			
 			Main.guiOnScreen.setDiamonds(-1);
 			Main.guiOnScreen.setEmeralds(-1);
+			Main.guiOnScreen.setBlocks(-1);
 		}		
 		
-		if (LobbyBlockPlacer.state == true && (!Main.chatListener.IS_IN_GAME || Main.shopManager.findItemInHotbar("Наблюдение за") != -1)) {
-			if (Main.shopManager.findItemInHotbar("Выбор коман") == -1)	LobbyBlockPlacer.place();
+		if (LobbyBlockPlacer.state == true && (!Main.chatListener.IS_IN_GAME || Main.shopManager.findItemInInventory("Наблюдение за") != -1)) {
+			if (Main.shopManager.findItemInInventory("Выбор коман") == -1)	LobbyBlockPlacer.place();
+		}
+		
+		if (zeroDeathHandlerRejoinVar > 0) {
+			zeroDeathHandlerRejoinVar -= 1;
+			ChatSender.sendText("/rejoin");
+			Main.chatListener.recoverGame();
 		}
 		
 		if (FIND_PLAYER_COMMAND_SEARCH.length() > 0) {

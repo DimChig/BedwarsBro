@@ -14,20 +14,21 @@ import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
 import com.dimchig.bedwarsbro.gui.GuiPlayerFocus;
 import com.dimchig.bedwarsbro.gui.GuiMinimap;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.Pos;
-import com.dimchig.bedwarsbro.hints.BridgeAutoAngle;
-import com.dimchig.bedwarsbro.hints.FreezeClutch;
-import com.dimchig.bedwarsbro.hints.HintsBaseRadar;
-import com.dimchig.bedwarsbro.hints.HintsBedScanner;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
-import com.dimchig.bedwarsbro.hints.LobbyBlockPlacer;
-import com.dimchig.bedwarsbro.hints.TNTJump;
-import com.dimchig.bedwarsbro.hints.WinEmote;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow.MsgCase;
 import com.dimchig.bedwarsbro.particles.ParticleController;
 import com.dimchig.bedwarsbro.particles.ParticleFinalKillEffect;
 import com.dimchig.bedwarsbro.serializer.MySerializer;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow;
+import com.dimchig.bedwarsbro.stuff.BridgeAutoAngle;
+import com.dimchig.bedwarsbro.stuff.FreezeClutch;
+import com.dimchig.bedwarsbro.stuff.HintsBaseRadar;
+import com.dimchig.bedwarsbro.stuff.HintsBedScanner;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.LobbyBlockPlacer;
+import com.dimchig.bedwarsbro.stuff.NamePlateRenderer;
+import com.dimchig.bedwarsbro.stuff.TNTJump;
+import com.dimchig.bedwarsbro.stuff.WinEmote;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow.MsgCase;
 
 import net.minecraft.block.BlockBed;
 import net.minecraft.client.Minecraft;
@@ -38,7 +39,10 @@ import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.monster.EntityGhast;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityFireball;
+import net.minecraft.entity.projectile.EntityLargeFireball;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -48,6 +52,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.IChatComponent;
@@ -67,16 +72,21 @@ public class KeybindHandler {
     KeyBinding keyHintsBedScanner;
     KeyBinding keyHintsFinder;
     KeyBinding keyBridgeautoAngle;
-    KeyBinding keyTNTJump;
     KeyBinding keyPlayerFocus;
     KeyBinding keyCommandLeave;
     KeyBinding keyCommandRejoin;
+    KeyBinding keyCommandLeaveRejoin;
     KeyBinding keyCommandPartyWarp;
+    KeyBinding keyRotateBind;
     KeyBinding keyZoomMinimap;
     KeyBinding keyPlaceBlockUnderPlayer;
     KeyBinding keyLobbyFly;
+    KeyBinding keyLookAtMyBase;
     KeyBinding keyFreezeCluth;
     KeyBinding keyShowLastLightning;
+    KeyBinding keySpawnFakeFireball;
+    
+    
     
     //built-in
     KeyBinding keyMCAttack;
@@ -103,7 +113,7 @@ public class KeybindHandler {
 		}
     	
     	String category = ColorCodesManager.replaceColorCodesInString(((char)32) + "&c&lBedwars&f&lBro" + ((char)32));
-    	String categoryEmotes = ColorCodesManager.replaceColorCodesInString(((char)32) + "&c&lBedwars&f&lBro &7→ &aЭмоции" + ((char)32));
+    	//String categoryEmotes = ColorCodesManager.replaceColorCodesInString(((char)32) + "&c&lBedwars&f&lBro &7→ &aЭмоции" + ((char)32));
     	
     	try {
     		String[] keys = readFile.split(";");
@@ -119,36 +129,45 @@ public class KeybindHandler {
     		int key10 = Integer.parseInt(keys[9]);
     		int key11 = Integer.parseInt(keys[10]);
     		int key12 = Integer.parseInt(keys[11]);
+    		int key13 = Integer.parseInt(keys[12]);
+    		int key14 = Integer.parseInt(keys[13]);
+    		int key15 = Integer.parseInt(keys[14]);
 
     		//System.out.println("READING KEYS = " + Arrays.toString(keys));
     		
     		
 	    	int k = 57344;
-	    	keyHintsBedScanner = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 1)) + "&fСканер &cкровати"), key1, category);	    	
-	    	keyHintsFinder = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 2)) + "&fНайти &eигроков"), key2, category);
-	    	keyCommandLeave = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 3)) + "&fКоманда &9/leave"), key3, category);
-	    	keyCommandRejoin = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 4)) + "&fКоманда &d/rejoin"), key4, category);
-	    	keyCommandPartyWarp = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 5)) + "&fКоманда &c/party warp"), key5, category);
-	    	keyZoomMinimap = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 6)) + "&eZoom &fминикрты"), key6, category);
-	    	keyBridgeautoAngle = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 7)) + "&fУстановить &6угол для GodBridge"), key7, category);
-	    	keyPlaceBlockUnderPlayer = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 8)) + "&fПрыжки по воздуху в &eлобби &7(Не чит)"), key8, category);
-	    	keyLobbyFly = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 9)) + "&fFly в &eлобби"), key9, category);
-	    	keyTNTJump = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 10)) + "&fАвто &cT&4N&cT &fПрыжок"), key10, category);
-	    	keyFreezeCluth = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 11)) + "&bЗафризить &fигру для клатча"), key11, category);
-	    	keyShowLastLightning = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 12)) + "&bПоказать последнюю &bмолнию"), key12, category);
+	    	keyHintsBedScanner = new KeyBinding(ColorCodesManager.replaceColorCodesInString((      (char)(k + 1)) + "&fСканер &cкровати"), key1, category);	    	
+	    	keyHintsFinder = new KeyBinding(ColorCodesManager.replaceColorCodesInString((          (char)(k + 2)) + "&fНайти &bигроков"), key2, category);
+	    	keyCommandLeave = new KeyBinding(ColorCodesManager.replaceColorCodesInString((         (char)(k + 3)) + "&fКоманда &c/leave"), key3, category);
+	    	keyCommandRejoin = new KeyBinding(ColorCodesManager.replaceColorCodesInString((        (char)(k + 4)) + "&fКоманда &a/rejoin"), key4, category);
+	    	keyCommandLeaveRejoin = new KeyBinding(ColorCodesManager.replaceColorCodesInString((   (char)(k + 5)) + "&fКоманда &c/leave &7+ &a/rejoin"), key5, category);
+	    	keyCommandPartyWarp = new KeyBinding(ColorCodesManager.replaceColorCodesInString((     (char)(k + 6)) + "&fКоманда &e/party warp"), key6, category);
+	    	keyRotateBind = new KeyBinding(ColorCodesManager.replaceColorCodesInString((           (char)(k + 7)) + "&fБинд на &cрозворот"), key7, category);
+	    	keyZoomMinimap = new KeyBinding(ColorCodesManager.replaceColorCodesInString((          (char)(k + 8)) + "&bZoom &fминикрты"), key8, category);
+	    	keyBridgeautoAngle = new KeyBinding(ColorCodesManager.replaceColorCodesInString((      (char)(k + 9)) + "&fУстановить &6угол для GodBridge"), key9, category);
+	    	keyPlaceBlockUnderPlayer = new KeyBinding(ColorCodesManager.replaceColorCodesInString(((char)(k + 10)) + "&fПрыжки по воздуху в &eлобби &7(Не чит)"), key10, category);
+	    	keyLobbyFly = new KeyBinding(ColorCodesManager.replaceColorCodesInString((             (char)(k + 11)) + "&aFly &fв лобби"), key11, category);
+	    	keyLookAtMyBase = new KeyBinding(ColorCodesManager.replaceColorCodesInString((         (char)(k + 12)) + "&fПосмотреть на &cсвою базу"), key12, category);	    	
+	    	keyFreezeCluth = new KeyBinding(ColorCodesManager.replaceColorCodesInString((          (char)(k + 13)) + "&bЗафризить &fигру для клатча"), key13, category);
+	    	keyShowLastLightning = new KeyBinding(ColorCodesManager.replaceColorCodesInString((    (char)(k + 14)) + "&bПоказать последнюю &bмолнию"), key14, category);
+	    	keySpawnFakeFireball = new KeyBinding(ColorCodesManager.replaceColorCodesInString((    (char)(k + 15)) + "&fЗаспавнить &6фейк-фаербол &7(видишь только ты)"), key15, category);
 
 	        ClientRegistry.registerKeyBinding(this.keyHintsBedScanner);
 	        ClientRegistry.registerKeyBinding(this.keyHintsFinder);
 	        ClientRegistry.registerKeyBinding(this.keyBridgeautoAngle);
-	        ClientRegistry.registerKeyBinding(this.keyTNTJump);
 	        ClientRegistry.registerKeyBinding(this.keyCommandLeave);
 	        ClientRegistry.registerKeyBinding(this.keyCommandRejoin);
+	        ClientRegistry.registerKeyBinding(this.keyCommandLeaveRejoin);
 	        ClientRegistry.registerKeyBinding(this.keyCommandPartyWarp);
+	        ClientRegistry.registerKeyBinding(this.keyRotateBind);
 	        ClientRegistry.registerKeyBinding(this.keyZoomMinimap);
 	        ClientRegistry.registerKeyBinding(this.keyPlaceBlockUnderPlayer);
 	        ClientRegistry.registerKeyBinding(this.keyLobbyFly);
+	        ClientRegistry.registerKeyBinding(this.keyLookAtMyBase);
 	        ClientRegistry.registerKeyBinding(this.keyFreezeCluth);
 	        ClientRegistry.registerKeyBinding(this.keyShowLastLightning);
+	        ClientRegistry.registerKeyBinding(this.keySpawnFakeFireball);
 
 	        keyPlayerFocus = mc.gameSettings.keyBindStreamCommercials;
 	        keyMCAttack = mc.gameSettings.keyBindAttack;
@@ -166,12 +185,15 @@ public class KeybindHandler {
     	s += Keyboard.KEY_NUMPAD0 + ";";    	
     	s += Keyboard.KEY_NUMPAD7 + ";";
     	s += Keyboard.KEY_NUMPAD8 + ";";
+    	s += Keyboard.KEY_J + ";";
     	s += Keyboard.KEY_NUMPAD9 + ";";
+    	s += Keyboard.KEY_GRAVE + ";";
     	s += Keyboard.KEY_NONE + ";";
     	s += Keyboard.KEY_B + ";";
     	s += Keyboard.KEY_F + ";";
     	s += Keyboard.KEY_L + ";";
-    	s += Keyboard.KEY_J + ";";
+    	s += Keyboard.KEY_K + ";";    	
+    	s += Keyboard.KEY_NONE + ";";
     	s += Keyboard.KEY_NONE + ";";
     	s += Keyboard.KEY_NONE + ";";
 
@@ -185,14 +207,17 @@ public class KeybindHandler {
 	    	s += keyHintsFinder.getKeyCode() + ";";	    	
 	    	s += keyCommandLeave.getKeyCode() + ";";
 	    	s += keyCommandRejoin.getKeyCode() + ";";
+	    	s += keyCommandLeaveRejoin.getKeyCode() + ";";
 	    	s += keyCommandPartyWarp.getKeyCode() + ";";
+	    	s += keyRotateBind.getKeyCode() + ";";
 	    	s += keyZoomMinimap.getKeyCode() + ";";
 	    	s += keyBridgeautoAngle.getKeyCode() + ";";
 	    	s += keyPlaceBlockUnderPlayer.getKeyCode() + ";";
 	    	s += keyLobbyFly.getKeyCode() + ";";
-	    	s += keyTNTJump.getKeyCode() + ";";
+	    	s += keyLookAtMyBase.getKeyCode() + ";";  	
 	    	s += keyFreezeCluth.getKeyCode() + ";";
 	    	s += keyShowLastLightning.getKeyCode() + ";";
+	    	s += keySpawnFakeFireball.getKeyCode() + ";";
 	    	FileManager.writeToFile(s, filename, false);
     	} catch (Exception ex) {}
     }
@@ -212,8 +237,25 @@ public class KeybindHandler {
     private ArrayList<Pos> mybeds = new ArrayList<Pos>();
     
     @SubscribeEvent
+    public void onMouseInput(InputEvent.MouseInputEvent e) throws Exception {
+    	handleKeys();
+    }
+    
+    @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent e) throws Exception {
+    	handleKeys();
+    }
+
+    public void handleKeys() {
     	if (Minecraft.getMinecraft().thePlayer == null) return;
+    	
+    	if (keyHintsBedScanner == null) {
+    		ChatSender.addText(Main.chatListener.PREFIX_BEDWARSBRO + "&cПроизошла ошибка с файлом... Попытка настройки...");
+    		initKeys();
+    		readKeys();
+    		saveKeybindings();
+    		return;
+    	}
     	
         if(keyHintsBedScanner.isPressed()) {
         	
@@ -224,9 +266,12 @@ public class KeybindHandler {
     		//note.harp
     		//note.hat
     		//note.pling
-    		//note.snar
-
+    		//note.snar            	        	
         }	
+        
+        if (keyRotateBind.isPressed() && !Main.rotateBind.isActive) {
+        	Main.rotateBind.startRotate();
+        }
 
         if (keyHintsFinder.isPressed()) {	
     		if (HintsValidator.isFinderActive()) {
@@ -248,10 +293,10 @@ public class KeybindHandler {
         	}
         }
         
-        if (keyTNTJump.isPressed()) {
+        if (keyCommandLeaveRejoin.isPressed()) {
         	if (HintsValidator.isPasswordCorrect()) {
-        		ChatSender.addText(MyChatListener.PREFIX_TNT_JUMP + "&6Не трогай клавиатуру и мышку...");
-        		TNTJump.lookAtNearestTNT();
+        		ChatSender.sendText("/leave");
+        		Main.myTickEvent.zeroDeathHandlerRejoinVar = 10;
         	}
         }
         
@@ -273,6 +318,8 @@ public class KeybindHandler {
         
         if (keyTab.isPressed()) {
         	Main.minimap.showNicknames = true;
+        	
+        	Main.namePlateRenderer.friends = Main.fileNicknamesManager.readNames(Main.commandFriends.filename); //updater
         } else if (!keyTab.isKeyDown()) {
         	Main.minimap.showNicknames = false;
         }
@@ -282,6 +329,13 @@ public class KeybindHandler {
         	Main.lobbyFly.isActive = true;
         } else if (!keyLobbyFly.isKeyDown()) {
         	Main.lobbyFly.isActive = false;
+        }
+        
+        if (keyLookAtMyBase.isPressed()) {
+        	Main.playerFocus.isLookAtBaseActive = true;
+        	if (Main.chatListener.GAME_BED == null) ChatSender.addText("&cНет кровати 0_o");
+        } else if (!keyLobbyFly.isKeyDown()) {
+        	Main.playerFocus.isLookAtBaseActive = false;
         }
         
         if (keyFreezeCluth.isPressed()) {
@@ -302,9 +356,29 @@ public class KeybindHandler {
         } else if (flagPlaceBlockUnderPlayer == true) {
         	flagPlaceBlockUnderPlayer = false;
         }
+        
+        if (keySpawnFakeFireball.isKeyDown()) {
+        	spawnFakeFireball();
+        }
     }
     
-    
+    private void spawnFakeFireball() {
+    	double posX = mc.thePlayer.posX;
+        double posY = mc.thePlayer.posY + mc.thePlayer.getEyeHeight();
+        double posZ = mc.thePlayer.posZ;  
+        double d1 = 1000D;
+        Vec3 vec3 = mc.thePlayer.getLook(1.0F);
+        double d2 = posX;
+        double d3 = mc.thePlayer.height;
+        double d4 = posZ;
+        EntityLargeFireball entitylargefireball = new EntityLargeFireball(mc.theWorld, mc.thePlayer, vec3.xCoord * d1, vec3.yCoord * d1, vec3.zCoord * d1);
+        entitylargefireball.explosionPower = 0;
+        entitylargefireball.setCustomNameTag("fake_fireball");
+        entitylargefireball.posX = mc.thePlayer.posX;
+        entitylargefireball.posY = mc.thePlayer.posY + mc.thePlayer.getEyeHeight();
+        entitylargefireball.posZ = mc.thePlayer.posZ;
+        mc.theWorld.spawnEntityInWorld(entitylargefireball);
+    }
     
     
     

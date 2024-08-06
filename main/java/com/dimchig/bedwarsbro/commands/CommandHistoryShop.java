@@ -13,10 +13,10 @@ import com.dimchig.bedwarsbro.ColorCodesManager;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.MyChatListener;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow.MsgCase;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow.MsgCase;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;

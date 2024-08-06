@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import com.dimchig.bedwarsbro.ChatSender;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
 import com.dimchig.bedwarsbro.particles.ParticleController;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;

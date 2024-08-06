@@ -1,6 +1,6 @@
 package com.dimchig.bedwarsbro;
 
-import com.dimchig.bedwarsbro.hints.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -19,8 +19,8 @@ import net.minecraft.world.World;
 public class AutoWaterDrop {
 	static Minecraft mc;
 	
-	boolean isPressed = false;
-	boolean isWaterDropStarted = false;
+	public boolean isPressed = false;
+	public boolean isWaterDropStarted = false;
 	KeyBinding keyUse;
 	private int delay_cnt = -1;
 	
@@ -31,6 +31,8 @@ public class AutoWaterDrop {
 	}
 
 	public void check(EntityPlayerSP player, Vec3 pos) {
+	
+		
 		if (player.motionY < -1f) {
 			
 			//scan blocks under player

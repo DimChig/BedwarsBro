@@ -7,7 +7,7 @@ import com.dimchig.bedwarsbro.ChatSender;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.MyBed;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;

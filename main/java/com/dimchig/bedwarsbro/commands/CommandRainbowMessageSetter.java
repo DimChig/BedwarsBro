@@ -172,12 +172,12 @@ public class CommandRainbowMessageSetter extends CommandBase {
 		} else if (arg0.equals("team")) {
 			try {
 				TEAM_COLOR tc = Main.chatListener.getEntityTeamColorByTeam(Minecraft.getMinecraft().thePlayer.getTeam().getRegisteredName());
-				if (tc == TEAM_COLOR.RED) output_str = "c4";
+				if (tc == TEAM_COLOR.RED) output_str = "c";
 				else if (tc == TEAM_COLOR.YELLOW) output_str = "e6";
-				else if (tc == TEAM_COLOR.GREEN) output_str = "a2";
+				else if (tc == TEAM_COLOR.GREEN) output_str = "a";
 				else if (tc == TEAM_COLOR.AQUA) output_str = "b";
 				else if (tc == TEAM_COLOR.BLUE) output_str = "b";
-				else if (tc == TEAM_COLOR.PINK) output_str = "5d";
+				else if (tc == TEAM_COLOR.PINK) output_str = "d";
 				else if (tc == TEAM_COLOR.GRAY) output_str = "f7";
 				else if (tc == TEAM_COLOR.WHITE) output_str = "f";
 				else {

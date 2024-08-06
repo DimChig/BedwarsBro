@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
+import scala.actors.threadpool.Arrays;
 
 public class ScoreboardManager {
 	
@@ -26,7 +27,7 @@ public class ScoreboardManager {
 			this.team.setNameSuffix("");
 			this.value = new_val;
 		}
-	}
+	}		
 	
 	public static String readRawScoreboard() {
 		String s = "";
@@ -71,8 +72,10 @@ public class ScoreboardManager {
 		ArrayList<MyScoreboardLine> lines2 = new ArrayList<MyScoreboardLine>();
 		lines2.addAll(lines);
 		for (MyScoreboardLine l: lines2) {
+			if (l == null || l.team == null) continue;
 			String prefix = l.team.getColorPrefix();
 			String suffix = l.team.getColorSuffix(); 
+			if (prefix == null || suffix == null) continue;
 			String new_text = (prefix + suffix).replace("&", "§").replace("§r", "").trim();
 			l.team.setNameSuffix(new_text);
 			l.team.setNamePrefix("");
@@ -133,6 +136,38 @@ public class ScoreboardManager {
 			}
 		}
 		return null;
+	}
+	
+	public static boolean isInBedwarsGame() {
+		try {        
+			String[] team_names = new String[] { "_red", "_yellow", "_green", "_aqua", "_blue", "_light_purple", "_gray", "_white" };
+			
+			String[] team_suffixes = new String[] { "Красные", "Желтые", "Зеленые", "Голубые", "Синие", "Розовые", "Серые", "Белые" };
+			
+			int count_names = 0;
+			int count_suffixes = 0;
+			
+        	Scoreboard scoreboard = Minecraft.getMinecraft().theWorld.getScoreboard();
+
+            for (ScorePlayerTeam team : scoreboard.getTeams()) {
+         	            
+            	if (team.getTeamName() == null) continue;
+            	if (team.getColorSuffix() == null) continue;
+            	for (String i: team_names) {
+            		if (team.getTeamName().contains(i)) count_names++;
+            	}
+            	for (String i: team_suffixes) {
+            		if (team.getColorSuffix().contains(i)) count_suffixes++;
+            	}
+            }
+            
+            //ChatSender.addText("&6&lCount: " + count_names + ", " + count_suffixes);
+            return count_names >= 4 && count_suffixes >= 4;
+            
+    	} catch (Exception ex) {
+    		ex.printStackTrace();
+    	}
+		return false;
 	}
 
 }

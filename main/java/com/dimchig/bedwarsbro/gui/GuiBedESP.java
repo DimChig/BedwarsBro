@@ -6,7 +6,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.MyBed;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -37,8 +37,10 @@ public class GuiBedESP {
 	public void onRenderWorldLastEvent(RenderWorldLastEvent event) {
 		if (!STATE) return;
 		
-		ArrayList<MyBed> beds = Main.minimap.bedsFound;
-		if (beds == null || beds.size() == 0) return;
+		ArrayList<MyBed> beds = new ArrayList<MyBed>();
+		
+		if (Main.minimap.bedsFound == null || Main.minimap.bedsFound.size() == 0) return;
+		beds.addAll(Main.minimap.bedsFound);
 		
 		float partialTicks = event.partialTicks;
 		
@@ -90,7 +92,7 @@ public class GuiBedESP {
 				}
 			}
 		}
-		
+		GL11.glColor4f(1f, 1f, 1f, 1f);
 		GL11.glPopAttrib();
 		GL11.glPopMatrix();
 	}

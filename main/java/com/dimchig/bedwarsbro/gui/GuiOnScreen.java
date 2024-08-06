@@ -6,10 +6,15 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
@@ -23,20 +28,24 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+
+import org.lwjgl.opengl.GL11;
 
 import com.dimchig.bedwarsbro.ChatSender;
 import com.dimchig.bedwarsbro.ColorCodesManager;
 import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.MyChatListener;
+import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
-import com.dimchig.bedwarsbro.hints.LightningLocator.MyLightning;
-import com.dimchig.bedwarsbro.hints.BWItemsHandler.BWItemPotionsID;
-import com.dimchig.bedwarsbro.hints.GeneratorTimers;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.GeneratorTimers;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.BWItemsHandler.BWItemPotionsID;
+import com.dimchig.bedwarsbro.stuff.LightningLocator.MyLightning;
 
 public class GuiOnScreen extends Gui {
 	
@@ -44,16 +53,19 @@ public class GuiOnScreen extends Gui {
     private Minecraft mc;
     private Field renderEventTypeField;
     private Field configChangedEventModIDField;
+    private final DecimalFormat timeFormatter = new DecimalFormat("0.0");
 	
     private MyItem item_diamond;
     private MyItem item_emerald;
+    private MyItem item_wool;
     
     private boolean isPotionEffectTrackerActive = false;
     private boolean isPotionEffectTrackerSoundsActive = false;
-    private boolean isTabBroListActive = false;
+    private boolean isBlocksCounterActive = false;    
     
     public int COUNT_EMERALDS = 0;
     public int COUNT_DIAMONDS = 0;
+    public int COUNT_BLOCKS = 0;
     
     private ResourceLocation resourceLoc_potions = new ResourceLocation("bedwarsbro:textures/gui/potions.png");
     private ResourceLocation resourceLoc_other = new ResourceLocation("bedwarsbro:textures/gui/other.png");
@@ -90,6 +102,9 @@ public class GuiOnScreen extends Gui {
     public void setEmeralds(int x) {
     	COUNT_EMERALDS = x;
     }
+    public void setBlocks(int x) {
+    	COUNT_BLOCKS = x;
+    }
     
 	public GuiOnScreen(Main asInstance) {
         this.asInstance = asInstance;
@@ -99,6 +114,7 @@ public class GuiOnScreen extends Gui {
         
         item_diamond = new MyItem(-2, -2, 12, 13, Items.diamond);
         item_emerald = new MyItem(-3, -1, 11, 14, Items.emerald);
+        item_wool = new MyItem(-1, 0, 14, 16, Item.getItemFromBlock(Blocks.wool));
         
         textureManager = mc.getTextureManager();
         updateBooleans(); 
@@ -120,7 +136,7 @@ public class GuiOnScreen extends Gui {
 	public void updateBooleans() {
 		isPotionEffectTrackerActive = HintsValidator.isPotionEffectsTrackerActive();
 		isPotionEffectTrackerSoundsActive = HintsValidator.isPotionEffectsTrackerSoundsActive();
-		isTabBroListActive = Main.getConfigBool(CONFIG_MSG.BRO_TAB_LIST);
+		isBlocksCounterActive = Main.getConfigBool(CONFIG_MSG.ITEM_COUNTER_BLOCKS);
 	}
 	
 	long lastPlaySoundTime = 0;
@@ -136,7 +152,80 @@ public class GuiOnScreen extends Gui {
             
             if (!isF3 && generatorTimers != null) generatorTimers.draw(screen_width, screen_height);
             
-        	if (item_emerald != null && item_diamond != null && !isF3) {
+            int block_counter_size_x = 0;
+            if (isBlocksCounterActive == true && item_wool != null && !isF3) {
+            	
+            	String text_blocks = "" + COUNT_BLOCKS;
+            	if (COUNT_BLOCKS > 64) text_blocks = "" + timeFormatter.format(COUNT_BLOCKS / 64f);
+            	if (COUNT_BLOCKS > 64 * 5) text_blocks = "" + (COUNT_BLOCKS / 64);
+	            int color_blocks = getColor("ffffffff");
+            	
+            	if (COUNT_BLOCKS > 0) {
+            		block_counter_size_x += mc.fontRendererObj.getStringWidth(text_blocks);
+		            
+
+		            int offsetY = 5;
+		            int topX = screen_width - block_counter_size_x - item_wool.width;
+		            int topY = screen_height- offsetY - item_wool.height;
+		            int bottomX = screen_width - block_counter_size_x;
+		            int bottomY = screen_height - offsetY;
+		            
+		            
+		            
+		            EnumDyeColor block_color = EnumDyeColor.WHITE;
+		            TEAM_COLOR team_color = Main.chatListener.getEntityTeamColor(mc.thePlayer);
+					
+					int meta = 0;
+					if (team_color == TEAM_COLOR.RED) meta = 14;
+					else if (team_color == TEAM_COLOR.YELLOW) meta = 4;
+					else if (team_color == TEAM_COLOR.GREEN) meta = 5;
+					else if (team_color == TEAM_COLOR.AQUA) meta = 3;
+					else if (team_color == TEAM_COLOR.BLUE) meta = 11;
+					else if (team_color == TEAM_COLOR.PINK) meta = 6;
+					else if (team_color == TEAM_COLOR.WHITE) meta = 0;
+					else if (team_color == TEAM_COLOR.GRAY) meta = 8;					
+					item_wool.stack.setItemDamage(meta);	
+		            
+		            
+		            mc.fontRendererObj.drawString(text_blocks, bottomX - 1, bottomY - 4, color_blocks, true);
+		    
+		            
+		            //item_wool.drawOnGui(topX, topY);
+		            IBakedModel ibakedmodel = mc.getRenderItem().getItemModelMesher().getItemModel(item_wool.stack);
+		            GlStateManager.pushMatrix();
+		            textureManager.bindTexture(TextureMap.locationBlocksTexture);
+		            textureManager.getTexture(TextureMap.locationBlocksTexture).setBlurMipmap(false, false);
+		            GlStateManager.enableRescaleNormal();
+		            GlStateManager.enableAlpha();
+		            GlStateManager.alphaFunc(516, 0.1F);
+		            GlStateManager.enableBlend();
+		            GlStateManager.blendFunc(770, 771);
+		            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+
+		            GlStateManager.translate((float)topX + item_wool.offsetX, (float)topY, -10.0F);
+		            GlStateManager.translate(8.0F, 8.0F, 0.0F);
+		            GlStateManager.scale(1.0F, 1.0F, -1.0F);
+		            GlStateManager.scale(0.5F, 0.5F, 0.5F);
+		            GlStateManager.scale(40.0F, 40.0F, 40.0F);
+		            GlStateManager.rotate(210.0F, 1.0F, 0.0F, 0.0F);
+		            GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+		            //GlStateManager.enableLighting(); //needed to remove it from origin (renderItemIntoGUI())
+		            ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GUI);
+		            mc.getRenderItem().renderItem(item_wool.stack, ibakedmodel);
+		            GlStateManager.disableAlpha();
+		            GlStateManager.disableRescaleNormal();
+		            GlStateManager.disableLighting();
+		            
+		            GlStateManager.popMatrix();
+		            textureManager.bindTexture(TextureMap.locationBlocksTexture);
+		            textureManager.getTexture(TextureMap.locationBlocksTexture).restoreLastBlurMipmap();
+		            
+		            block_counter_size_x += item_wool.width + 2;
+	            }
+	            
+            }
+            
+        	if (Main.myTickEvent.isHintsItemCounterActive && item_emerald != null && item_diamond != null && !isF3) {
 	        	//draw stats
 	            String text_emeralds = "" + COUNT_EMERALDS;
 	            int color_emerals = getColor("ffffffff");
@@ -151,11 +240,11 @@ public class GuiOnScreen extends Gui {
 	            int font_diamonds_width = mc.fontRendererObj.getStringWidth(text_diamonds);
 	            int font_diamonds_height = mc.fontRendererObj.FONT_HEIGHT;
 	            
-	            int offsetX = 0;
+	            int offsetX = block_counter_size_x;
 	            if (COUNT_EMERALDS > 0) {
-		            if (text_emeralds.length() == 1) offsetX = 6;
-		            if (text_emeralds.length() == 2) offsetX = 12;
-		            if (text_emeralds.length() == 3) offsetX = 18;
+		            if (text_emeralds.length() == 1) offsetX += 6;
+		            if (text_emeralds.length() == 2) offsetX += 12;
+		            if (text_emeralds.length() == 3) offsetX += 18;
 		            
 		            int offsetY = 5;
 		            int topX = screen_width - offsetX - item_emerald.width;

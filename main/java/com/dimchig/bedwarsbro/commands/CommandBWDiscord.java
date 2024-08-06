@@ -11,7 +11,7 @@ import com.dimchig.bedwarsbro.Main;
 import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
 import com.dimchig.bedwarsbro.gui.GuiPlayer;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;

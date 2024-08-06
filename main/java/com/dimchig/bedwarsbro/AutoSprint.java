@@ -1,6 +1,6 @@
 package com.dimchig.bedwarsbro;
 
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;

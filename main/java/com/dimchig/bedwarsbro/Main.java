@@ -25,57 +25,67 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import com.dimchig.bedwarsbro.commands.CommandEnableESP;
+import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
 import com.dimchig.bedwarsbro.commands.CommandBWDiscord;
 import com.dimchig.bedwarsbro.commands.CommandDexlandMeowSpoof;
 import com.dimchig.bedwarsbro.commands.CommandFindPlayerByName;
+import com.dimchig.bedwarsbro.commands.CommandFriends;
 import com.dimchig.bedwarsbro.commands.CommandHintsFinderLookAt;
 import com.dimchig.bedwarsbro.commands.CommandHintsFinderLookAtPlayer;
 import com.dimchig.bedwarsbro.commands.CommandHistoryShop;
 import com.dimchig.bedwarsbro.commands.CommandMeow;
 import com.dimchig.bedwarsbro.commands.CommandModHelp;
+import com.dimchig.bedwarsbro.commands.CommandMute;
+import com.dimchig.bedwarsbro.commands.CommandNameChanger;
 import com.dimchig.bedwarsbro.commands.CommandRainbowMessage;
 import com.dimchig.bedwarsbro.commands.CommandRainbowMessageSetter;
 import com.dimchig.bedwarsbro.gui.Draw3DText;
 import com.dimchig.bedwarsbro.gui.GuiBedESP;
 import com.dimchig.bedwarsbro.gui.GuiCrosshairBlocks;
 import com.dimchig.bedwarsbro.gui.GuiMinimap;
+import com.dimchig.bedwarsbro.gui.GuiMinimapOLD;
 import com.dimchig.bedwarsbro.gui.GuiOnScreen;
 import com.dimchig.bedwarsbro.gui.GuiPlayerFocus;
 import com.dimchig.bedwarsbro.gui.GuiRadarIcon;
 import com.dimchig.bedwarsbro.gui.GuiResourceHologram;
-import com.dimchig.bedwarsbro.hints.BedAutoTool;
-import com.dimchig.bedwarsbro.hints.BedwarsMeow;
-import com.dimchig.bedwarsbro.hints.DangerAlert;
-import com.dimchig.bedwarsbro.hints.FreezeClutch;
-import com.dimchig.bedwarsbro.hints.GeneratorTimers;
-import com.dimchig.bedwarsbro.hints.HintsBaseRadar;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.HintsItemTracker;
-import com.dimchig.bedwarsbro.hints.HintsPlayerScanner;
-import com.dimchig.bedwarsbro.hints.InvulnerableTime;
-import com.dimchig.bedwarsbro.hints.LightningLocator;
-import com.dimchig.bedwarsbro.hints.LobbyFly;
-import com.dimchig.bedwarsbro.hints.TrajectoryPearl;
-import com.dimchig.bedwarsbro.hints.NamePlate;
-import com.dimchig.bedwarsbro.hints.NamePlateRenderer;
-import com.dimchig.bedwarsbro.hints.RainbowColorSynchronizer;
-import com.dimchig.bedwarsbro.hints.ShopManager;
-import com.dimchig.bedwarsbro.hints.TNTJump;
-import com.dimchig.bedwarsbro.hints.TakeMaxSlotBlocks;
-import com.dimchig.bedwarsbro.hints.TrajectoryFireball;
 import com.dimchig.bedwarsbro.particles.ParticleController;
 import com.dimchig.bedwarsbro.particles.ParticleTrail;
 import com.dimchig.bedwarsbro.particles.ParticlesAlwaysSharpness;
 import com.dimchig.bedwarsbro.serializer.MySerializer;
-import com.dimchig.nolegit.AimHelper;
-import com.dimchig.nolegit.BowAimbot;
+import com.dimchig.bedwarsbro.stuff.BedAutoTool;
+import com.dimchig.bedwarsbro.stuff.BedwarsMeow;
+import com.dimchig.bedwarsbro.stuff.DangerAlert;
+import com.dimchig.bedwarsbro.stuff.FireballSpread;
+import com.dimchig.bedwarsbro.stuff.FreezeClutch;
+import com.dimchig.bedwarsbro.stuff.GeneratorTimers;
+import com.dimchig.bedwarsbro.stuff.HintsBaseRadar;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsItemTracker;
+import com.dimchig.bedwarsbro.stuff.HintsPlayerScanner;
+import com.dimchig.bedwarsbro.stuff.InvulnerableTime;
+import com.dimchig.bedwarsbro.stuff.LightningLocator;
+import com.dimchig.bedwarsbro.stuff.LobbyFly;
+import com.dimchig.bedwarsbro.stuff.NamePlate;
+import com.dimchig.bedwarsbro.stuff.NamePlateRenderer;
+import com.dimchig.bedwarsbro.stuff.RainbowColorSynchronizer;
+import com.dimchig.bedwarsbro.stuff.RotateBind;
+import com.dimchig.bedwarsbro.stuff.ShopManager;
+import com.dimchig.bedwarsbro.stuff.TNTJump;
+import com.dimchig.bedwarsbro.stuff.TakeMaxSlotBlocks;
+import com.dimchig.bedwarsbro.stuff.TrajectoryFireball;
+import com.dimchig.bedwarsbro.stuff.TrajectoryPearl;
+import com.dimchig.bedwarsbro.stuff.ZeroDeathHandler;
+import com.dimchig.bedwarsbro.testing.AimHelper;
+import com.dimchig.bedwarsbro.testing.BowAimbot;
 
 @Mod(modid = Main.MODID, name = Main.NAME, version = Main.VERSION, clientSideOnly = true, acceptedMinecraftVersions = Main.MCVERSIONS, guiFactory = "com.dimchig.bedwarsbro.gui.GuiFactory")
 public class Main {
     public static final String MODID = "bedwarsbro";
     public static final String NAME = "BedwarsBro";
-    public static final String VERSION = "2.2";
+    public static final String VERSION = "2.6";
     public static final String MCVERSIONS = "[1.8, 1.12.2]";
+    
+    public static int ANTIMUT_DELAY = 1000 * 60; //1 minute
     
     public static Main instance;
 
@@ -96,7 +106,7 @@ public class Main {
     public static HintsItemTracker itemTracker;
     public static ParticleController particleController;
     public static ParticleTrail particleTrail;
-    public static GuiMinimap minimap;
+    public static GuiMinimap minimap;    
     public static GeneratorTimers generatorTimers;
     public static GuiPlayerFocus playerFocus;
     public static TNTJump tntjump;
@@ -115,7 +125,10 @@ public class Main {
     public static CommandRainbowMessageSetter commandRainbowMessageSetter;
     public static CommandDexlandMeowSpoof commandDexlandMeowSpoof;
     public static CommandEnableESP commandEnableESP;
+    public static CommandNameChanger commandNameChanger;
     public static CommandBWDiscord commandBWDiscord;
+    public static CommandMute commandMute;
+    public static CommandFriends commandFriends;
     public static MySerializer mySerializer;
     public static ShopManager shopManager;
     public static LoginHandler loginHandler;
@@ -134,9 +147,13 @@ public class Main {
     public static TakeMaxSlotBlocks takeMaxSlotBlocks;
     public static TrajectoryPearl trajectoryPearl;
     public static TrajectoryFireball trajectoryFireball;
+    public static FireballSpread fireballSpread;
     public static FreezeClutch freezeClutch;
     public static LightningLocator lightningLocator;
     public static LobbyFly lobbyFly;
+    public static ZeroDeathHandler zeroDeathHandler;
+    public static RotateBind rotateBind;
+    public static FileNicknamesManager fileNicknamesManager;
     
     private boolean state = false;
 
@@ -180,6 +197,7 @@ public class Main {
     	AUTO_SPRINT(3, "Авто &dСпринт &7(Вечный бег)"),
     	
     	MINIMAP(4, "&6Миникарта"),
+    	MINIMAP_FRAME(90, "&6Миникарта &7→ &fРамка"),
     	MINIMAP_X(5, "&6Миникарта &7→ &cX &7положение по горизонтали <-->&c*"),
     	MINIMAP_Y(6, "&6Миникарта &7→ &bY &7положение по вертикали ||"),
     	MINIMAP_SIZE(7, "&6Миникарта &7→ &fРазмер"),
@@ -191,18 +209,20 @@ public class Main {
     	RADAR_PLAYERS(60, "&aРадар &7→ &fРадар игроков&c*"),
     	RADAR_ICON(57, "&aРадар &7→ &fПоказывать иконку&c*"),    	
     	RADAR_MESSAGES(10, "&aРадар &7→ &fОтправлять сообщения тиммейтам&c*"),
-    	RADAR_MESSAGES_WITH_COLORS(11, "&aРадар &7→ &fОтправлять сообщения тиммейтам с &cц&eв&aе&bт&9а&dм&cи &7(только для &fLEGEND&7)"),
-    	
+    	RADAR_RANGE_SECOND(83, "&aРадар &7→ &fРадиус срабатывания на раш&c*"),
+    	RADAR_RANGE_FIRST(84, "&aРадар &7→ &fРадиус срабатывания на ломание&c*"),
+    	    
     	BED_ESP(56, "&bПодсветка кроватей &7(bed ESP)"),
     	BED_AUTOTOOL(63, "&bЛомание кровати &7→ &fАвтовыбор инструментов&c*"),
     	BED_SCANNER(12, "&bСканер кровати&c*"),    	
     	BED_SCANNER_ANIMATION(13, "&bСканер кровати &7→ &fАнимация по слоям&c*"),
     	BED_SCANNER_ANIMATION_DELAY(14, "&bСканер кровати &7→ &fСкорость анимации (миллисекунды)"),  
-    	
-    	
+    	BED_SCANNER_SEND_TEAM(72, "&bСканер кровати &7→ &fОтправлять сообщения тиммейтам&c*"), 
+    		
     	PLAYER_FINDER(15, "&9Поиск игроков&c*"),
     	
     	ITEM_COUNTER(17, "&fКоличество &aизумрудов &fи &bалмазов &fв углу экрана"),
+    	ITEM_COUNTER_BLOCKS(69, "&fКоличество &aблоков &fв углу экрана (сумарно)"),
     	
     	BEDWARS_MEOW(18, "&eMeow &7→ &fАвто-Сообщения после &cкила&f, &eсмерти&f, &aкровати &fи &dвыйграша&c*"),
     	BEDWARS_MEOW_WITH_COLORS(19, "&eMeow &7→ &fИспользовать цвета &7(только для &cд&6о&eн&aа&bт&9е&dр&cо&6в&7)"),    	
@@ -223,9 +243,20 @@ public class Main {
     	BETTER_SHOP(25, "&eМагазин &7→ &fУлучшенная версия&c&l*"),
     	REMOVE_BUY_MESSAGE(26, "&eМагазин &7→ &fУбрать сообщение при покупке"),
     	
+    	ZERO_DEATH(74, "&aZero &cDeath &f(Авто /leave /rejoin)"),
+    	ZERO_DEATH_HEIGHT_TRESHOLD(75, "&aZero &cDeath &7→ &fКоличество блоков снизу от кровати&c*"),
+    	ZERO_DEATH_FALL_CHECK(76, "&aZero &cDeath &7→ &fЛивать от смертельного урона от падения&c*"),
+    	ZERO_DEATH_HEALTH_TRESHOLD(77, "&aZero &cDeath &7→ &fМин уровень здоровья&c*"),
+    	ZERO_DEATH_HEALTH_CHECK_NEARBY(79, "&aZero &cDeath &7→ &fМин уровень здоровья &7→ &aПроверять окружение&c*"),
+    	ZERO_DEATH_WRITE_IN_CHAT(78, "&aZero &cDeath &7→ &fПисать в чат&c*"),
+    	
+    	ROTATE_BIND_DEGREES(81, "&fБинд на &cрозворот &7→ &fУгол поворота&c*"),
+    	ROTATE_BIND_SPEED(82, "&fБинд на &cрозворот &7→ &fСкорость поворота&c*"),
+    	
     	NAMEPLATE(27, "&fНик от 3-его лица"),
     	NAMEPLATE_RAINBOW(28, "&fНик от 3-его лица &7→ &f&cР&eа&aд&bу&9ж&dн&cы&eй &fник"),
     	NAMEPLATE_RAINBOW_CONSTANT_COLOR(29, "&fНик от 3-его лица &7→ &fПостоянный цвет &7(в формате hex)&c&l*"),
+    	NAMEPLATE_TEAM_COLOR(80, "&fНик от 3-его лица &7→ &fПостоянный цвет команды&c*"),
     	
     	CUSTOM_PARTICLES(30, "&fРазноцветные &cп&eа&aр&bт&9и&dк&cл&eы&c*"),
     	
@@ -241,12 +272,10 @@ public class Main {
     	RAINBOW_MESSAGE_COLORS(37, "Разноцветные &cс&eо&aо&bб&9щ&dе&cн&eи&aя &7→ &fЦветовая палитра&c*"),
     	RAINBOW_MESSAGE_REPLACE_CHARS(38, "Разноцветные &cс&eо&aо&bб&9щ&dе&cн&eи&aя &7→ &fЗаменить символ"),
     	
-    	WIN_EMOTE(39, "&cВыйграш &7→ &fзаменить мир другими блоками&c&l*"), 		
+    	WIN_EMOTE(39, "&cВыигрыш &7→ &fзаменить мир другими блоками&c&l*"), 		
     	
     	INVULNERABLE_TIMER(40, "&eВремя неуязвимости игроков&c&l* &7(после спавна)"),
     	INVULNERABLE_TIMER_SOUNDS(41,"&eВремя неуязвимости игроков &7→ &fЗвуки"),
-    	
-    	MUTED_PLAYERS(42, "&fЗамутить игроков в лобби&c&l*"),
     	
     	BRIDGE_AUTOANGLE_PITCH(43, "&aАвтоУгол для GodBridge &7→ &fНаклон по вертикали &7(45°, &a76°&7)&c*"),
     	BRIDGE_AUTOANGLE_MESSAGES(44, "&aАвтоУгол для GodBridge &7→ &fВыводить в чат сообщения"),
@@ -255,12 +284,18 @@ public class Main {
     	RESOURCES_HOLOGRAM(46, "&fГолограмма над ресурсами"),
     	
     	MAP_AUTO_SELECTER(48, "&fЛюбимые карты &7(только для &fLEGEND&7)"),
-    	BRO_TAB_LIST(62, "&fИгроки с модом отдельно в табе"),
     	CROSSHAIR_BLOCKS_COUNT(64, "&fКоличество блоков рядом с прицелом"),
     	TAKE_BLOCKS_FROM_MAX_SLOT(65, "&fБрать блоки из максимального слота справа"),
-    	PEARL_PREDICTION(66, "&fТраектория эндер-перла"),
-    	FIREBALL_PREDICTION(67, "&fТраектория фаербола");
-    	//max 68
+    	PEARL_PREDICTION(66, "&fТраектория эндер-перла"),    	
+    	FIREBALL_PREDICTION(67, "&fТраектория &6фаербола&c*"),
+    	FIREBALL_SPREAD(85, "&fРазброс &6фаербола&c*"),
+    	FIREBALL_SPREAD_OFFSET_X(86, "&fРазброс &6фаербола&7→ &fСместить на пару пикселей право&c*"),
+    	NICK_CHANGER(71, "&fНик &7→ &fПоменять на свой &c(только у тебя)"),
+    	AUTO_LOGIN_PWD(73, "&fАвтологин &7(за тебя вводит пароль)&7→ &fТвой пароль /l &b****"),
+    	BETTER_TAB_CROSSED_NICKNAMES(88, "&fУлучшенный таб (зачеркивать если игрок в спектаторах или без кровати)");
+    	
+    	
+    	//use 91 next
     	
     	
     	public final int id;
@@ -313,23 +348,30 @@ public class Main {
         Property prop;
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ENABLE_BETTER_CHAT.text, true,                              ColorCodesManager.replaceColorCodesInString("&f&aВключить&7/&cВыключить &fизменение чата"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ENABLE_BETTER_CHAT_STATISTIC_PREFIX.text, false,                              ColorCodesManager.replaceColorCodesInString("&f&aВключить&7/&cВыключить &fпоказ статистики игрока\n\"&7[&aкол-во килов&7, &aK/D&7, &aWinRate&7]&f\""));
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.SCOREBOARD_ENGLISH.text, false,                              ColorCodesManager.replaceColorCodesInString("&f&aВключить&7/&cВыключить &fпоказ команд и текста на английском языке (как на Hypixel)\n&bНачни новую игру после включения!"));
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MUTED_PLAYERS.text, "Arab_yxz361, ARAB_*",                          ColorCodesManager.replaceColorCodesInString("&fРазделяй ники спамеров &aзапятыми&f, вот так:\n\n&fArab_yxz361, NikitaBoy228, killer1234.\nМожно юзать звездочку *, чтоб замутить всех игроков с такой частью в нике"));        
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.SCOREBOARD_ENGLISH.text, false,                              ColorCodesManager.replaceColorCodesInString("&f&aВключить&7/&cВыключить &fпоказ команд и текста на английском языке (как на Hypixel)\n&bНачни новую игру после включения!"));        
+        
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_SCANNER.text, true,                                ColorCodesManager.replaceColorCodesInString("&fСканер кровати!\n&fПри нажатии на кнопку &7(смотри в настройках -> управление) &fсмотри на базу противников (кровать найдеться в радиусе 20 блоков). В чате напишет чем застроена кровать, например есть ли у них обса"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_SCANNER_ANIMATION.text, true, 					   ColorCodesManager.replaceColorCodesInString("&fЕсли вкючить это, то при нажатии на кнопку сканера кровати, у тебя кровать будет показываться по слоям! Это экспериментальная опция, если находиться близко к кровати у тебя может лагать и ты застрянешь в блоках. Использовать можно чтоб увидеть с какой стороны лучше начать ломать"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_SCANNER_ANIMATION_DELAY.text, 200,                 ColorCodesManager.replaceColorCodesInString("&fЭто задержка для анимации. То-есть каждый слой будет показываться по &e300 &fмиллисекунд, тоесть &e0.3 &fсекунды. Можешь поменять, но не ставь больше &e1000&f."));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_ESP.text, true,                 ColorCodesManager.replaceColorCodesInString("&fЭто типо xray для кроватей (Bed ESP), будет видно их сквозь блоки, очень удобно когда большая застройка"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_AUTOTOOL.text, true,                 ColorCodesManager.replaceColorCodesInString("&fКогда ты начнешь ломать блок, у тебя будут выбираться &bнужные инструменты &f(если куплены), чтоб сломать кровать быстрее. &cНе работает, если далеко от кровати, и если не выбран один из инструментов (выбери любой и начни копать)"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BED_SCANNER_SEND_TEAM.text, false,                 ColorCodesManager.replaceColorCodesInString("&fСообщения от сканнера кровати будут слаться команде (не чаще чем раз в минуту), чтоб избежать мут. Чтоб писать цветным в чате, надо иметь донат LEGEND и включить \"&eMeow с цветами&f\"!"));
+        
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR.text, true,                               ColorCodesManager.replaceColorCodesInString("&fЕсли враг подойдет близко к твоей базе, тебе прийдет сообщение со звуком типо:\n\"&eНас рашит &aЗеленый&f\"\nК сожалению, если &cдалеко уйти от базы&f, то работать &cне будет&f!"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_PLAYERS.text, false,                               ColorCodesManager.replaceColorCodesInString("&fЕсли &c&lкровать сломана&f, и враг подойдет близко к тебе, тебе прийдет сообщение со звуком типо:\n\"&eРядом &aЗеленый&f\"!"));
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_ICON.text, true,                               ColorCodesManager.replaceColorCodesInString("&fЕсли враг подойдет близко к твоей базе, будт иконка кровати на 1 секунду поцентру сверху, чтоб ты заметил. Точно также будет картинка игрока, если радар игроков включен"));
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_MESSAGES.text, false,                 ColorCodesManager.replaceColorCodesInString("&fСообщение про радар приходит только тебе. Если ты хочешь поделиться с тиммейтами, включи это, и тогда ты напишешь в чат это же сообщение уже своим тиммейтам."));
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_MESSAGES_WITH_COLORS.text, false,     ColorCodesManager.replaceColorCodesInString("&fТолько для донатеров!\nТут тоже самое, но сообщение тиммейтам будет приходить цветное. Ставь &atrue &fтолько если ты можешь писать всеми цветами (как &bLEGEND&f)"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_ICON.text, true,                               ColorCodesManager.replaceColorCodesInString("&fЕсли враг подойдет близко к твоей базе, будт иконка кровати на 1 секунду поцентру сверху, чтоб ты заметил. Точно также будет картинка игрока, если радар игроков включен"));        
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_MESSAGES.text, false,                               ColorCodesManager.replaceColorCodesInString("&fСообщения от радара будут слаться команде (не чаще чем раз в минуту), чтоб избежать мут. Чтоб писать цветным в чате, надо иметь донат LEGEND и включить \"&eMeow с цветами&f\"!"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_RANGE_SECOND.text, 20,                               ColorCodesManager.replaceColorCodesInString("&fЕсли игрок войдет в эту зону, то радар напишет \"&eНас рашит игрок&f\""));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RADAR_RANGE_FIRST.text, 8,                               ColorCodesManager.replaceColorCodesInString("&fЕсли игрок войдет в эту зону, то радар напишет \"&cНас ломает игрок&f\""));
+        
+        
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ITEM_COUNTER.text, true,                               ColorCodesManager.replaceColorCodesInString("&fПоказывает количество &aизумрудов&f, и &bалмазов &fв правом нижнем углу. Очень удобно"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ITEM_COUNTER_BLOCKS.text, true,                               ColorCodesManager.replaceColorCodesInString("&fПоказывает количество &bблоков &fв правом нижнем углу. Очень удобно"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.PLAYER_FINDER.text, true,                                     ColorCodesManager.replaceColorCodesInString("&fПоиск игроков. При нажатии на кнопку &7(смотри в настройках -> управление) &fмод попытается найти всех игроков в зоне видимости, это приблизительно &e60 блоков&f. В чате будет сообщение с ником игрока. Если &aнавести мышкой &fна сообщение, то ты увидешь:\n\n\"&7(&fx&7, &fy&7, &fz&7, &c[дистанция до игрока]&7) &fтип брони и &fпредмет в руке\"\n\n&fКрасная звездочка&c*&f, или &c**&f, означают что у игрока либо алмазка, либо лук, перл или силка. Это как сложность игрока типо\n\n&fЕсли &aНАЖАТЬ &fна сообщение, то твоя голова повернется в сторону этого игрока"));
          
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.WIN_EMOTE.text, true,                                        ColorCodesManager.replaceColorCodesInString("&fАнимация при выйграше. В конце катки мир вокруг тебя изменится на блоки цвета команды. Если выйграли зеленые, то мир измениться на изумрудные блоки, шерсть и тд =)"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MINIMAP.text, true,                                          ColorCodesManager.replaceColorCodesInString("&fМиникарта, показывает игроков в виде разноцветных стрелок.\n&c&lЖрет около 40FPS (у меня без карты 200, с ней 160). Включайте на свое усмотрение.\n&fВесь мир - серый, так удобнее. Так же показывает числами количество ресурсов. Не показывает меньше &b3-х алмазов&f, если на базе, то < &e12 золота&f и < &f64 железа."));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MINIMAP_FRAME.text, false,                                          ColorCodesManager.replaceColorCodesInString("&fВозможность убрать эту квадратную рамку"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MINIMAP_X.text, "0",                                  ColorCodesManager.replaceColorCodesInString("&fПозиция миникарты (X это <--->, Y это по вертикали)\n &fЕсли &cX &eположительный &7(не меньше 0)&f, то это будет отступ &aслева&f\n &fЕсли &cX &eотрицательный &7(меньше 0)&f, будет отступ &aсправа\n &fЕсли &bY &eположительный &7(не меньше 0)&f, то это будет отступ &aсверху&f\n &fЕсли &bY &eотрицательный &7(меньше 0)&f, будет отступ &aснизу\n\nВот примеры настроек:\n &fЛевый верхний угол:  &cX = 0&7,&bY = 0\n &fПравый верхний угол: &cX = -0&7, &bY = 0\n &fЛевый нижний угол:   &cX = 0&7, &bY = -0\n &fПравый нижний угол:  &cX = -0&7, &bY = -0\n\n &fМиникарта с отступом &c5 &fот левого края, и &b15 &fсвеху&f: &cX = -5&7, &bY = 15"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MINIMAP_Y.text, "0",                                  ColorCodesManager.replaceColorCodesInString("&fПрочитай в \"" + CONFIG_MSG.MINIMAP_X.getName() + "\""));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.MINIMAP_SIZE.text, 100,                                      ColorCodesManager.replaceColorCodesInString("&fРазмер миникарты &7(от &e50 &7до &e150&7)"));
@@ -368,12 +410,29 @@ public class Main {
         
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.REMOVE_BUY_MESSAGE.text, true,                        ColorCodesManager.replaceColorCodesInString("&fВ магазине не будут отображаться сообщения"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BETTER_SHOP.text, true,                        ColorCodesManager.replaceColorCodesInString("&fВ магазине предметы, на которых нету ресов, будут невидимыми\n\n&b&lНапиши команду &e/bwbroshop &b&lдля детальной статистики своих покупок!"));
+        
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH.text, false,                        ColorCodesManager.replaceColorCodesInString("&fЕсли хочешь себе очень высокий &eK/D&f, то перед своей смертью ты можешь прописать &c/leave &fи &a/rejoin&f, тогда смерть не засчитается. Будет срабатывать АвтоLeave по одному из условий:\n &f1) Либо ты упал ниже, чем &aN &fблоков от высоты своей кровати\n &f2) &fЛибо если ты падаешь с смертельной высоты &7(это если ты ударишся об землю! &aЕсли снизу вода, или у тебя в руке вода, или активирован Автоватердроп, то не ливнешь&7)\n &f3) Либо у тебя <= указанного &aколичества здоровья&f &7(максимум 20) &7(также учитывается окружение, смотри опцию ниже)&f\n\n&cИногда может забагатся и не ливнуть тебя. Например когда тебя убили с силкой, и ни одно из условий не выполнилось. Советую НЕ МЕНЯТЬ значения ниже, так как я их подобрал оптимально. Если ты уверен можешь поменять. &c&lНЕ РАБОТАЕТ В ПАТИ, РАБОТАЕТ ТОЛЬКО В ИГРЕ!"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH_HEIGHT_TRESHOLD.text, 10,                        ColorCodesManager.replaceColorCodesInString("&fУсловие если ты упал ниже, чем &aN &fблоков от высоты своей кровати\n\n&b&lПОСТАВЬ &c&l999 &b&lЧТОБ ИГНОРИРОВАТЬ УСЛОВИЕ"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH_FALL_CHECK.text, true,                        ColorCodesManager.replaceColorCodesInString("&fУсловие если ты падаешь с смертельной высоты &7(это если ты ударишся об землю! &aЕсли снизу вода, или у тебя в руке вода, или включен Автоватердроп, то не ливнешь&7)&f\n\n&b&lПОСТАВЬ &c&lFALSE &b&lЧТОБ ИГНОРИРОВАТЬ УСЛОВИЕ\n\n&fБудет учитыватся твое здоровье. Тоесть если у тебя осталось пол хп, ты сможешь упасть только с 13 блоков не умерев. Рассчет по формуле &aN &7(max) = &a[твое хп] &e+ &c[высота падения] &e+ &b3.5 &e+ &d[уровень чара брони на защиту, тоже формула] &e+ &a[уровень эффекта прыгучести]&f. Если ты не знал, то твоя броня &cбез чаров &fникак не влияет на урон падения"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH_HEALTH_TRESHOLD.text, 4f,                        ColorCodesManager.replaceColorCodesInString("&fУсловие если у тебя <= &7(меньше или равно) &fуказанного &aколичества здоровья&f &7(максимум 20)\n\n&b&lПОСТАВЬ &c&l999 &b&lЧТОБ ИГНОРИРОВАТЬ УСЛОВИЕ"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH_HEALTH_CHECK_NEARBY.text, true,                        ColorCodesManager.replaceColorCodesInString("&fУсловие если у тебя <= &7(меньше или равно) &fуказанного &aколичества здоровья&f И ТАКЖЕ:\n &f1) Либо рядом есть игрок &7(не тиммейт)\n &f2) Либо рядом летит стрела\n\n&aТоесть если ты упадешь с высоты &7(или получишь большой урон) &a&lв дали от других игроков&a, то мод &cне перезайдет &aв игру."));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ZERO_DEATH_WRITE_IN_CHAT.text, true,                        ColorCodesManager.replaceColorCodesInString("&fМод будет писать в чате когда он ливает за тебя, чтоб ты понимал когда он сработал. Можно навести мышкой и напишет причину лива"));
+        
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ROTATE_BIND_DEGREES.text, 180,                        ColorCodesManager.replaceColorCodesInString("&fПо нажатию на кнопку &7(Настройки -> Управление) &fтвой прицел развернется на &aN &fградусов.\n"
+        		+ "\n &7- &fПолуоборот вправо &7= &e180"
+        		+ "\n &7- &fПолуоборот влево  &7= &e-180"
+        		+ "\n &7- &fПолный оборот вправо &7= &e360"
+        		+ "\n &7- &fПолный оборот влево  &7= &e-360"
+		        + "\n &7- &fДвойной оборот &7= &e720"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.ROTATE_BIND_SPEED.text, 1f,                        ColorCodesManager.replaceColorCodesInString("&fСкорость поворота. Чем &aбольше &fскорость &7- &fТем &aдольше &fповорот! &b0 &7= &fмгновенный поворот"));
+        
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.PARTICLE_TRAIL.text, false,                        ColorCodesManager.replaceColorCodesInString("&fБудут спавниться партиклы за тобой во время бега. Во время строительства не будут мешать"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.PARTICLE_TRAIL_RAINBOW.text, true,                        ColorCodesManager.replaceColorCodesInString("&2&ltrue &7- &fВсегда будут спавниться разноцветные партиклы\n&f&4&lfalse &7- &fВо время катки будут партиклы цвета твоей команды"));
         
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.NAMEPLATE.text, true,                        ColorCodesManager.replaceColorCodesInString("&fЕсли нажать &eF5&f, то ты увидишь свой ник"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.NAMEPLATE_RAINBOW.text, true,                        ColorCodesManager.replaceColorCodesInString("&fНик будет красиво переливаться радужным &cг&eр&aа&bд&9и&dе&cн&eт&aо&bм"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.NAMEPLATE_RAINBOW_CONSTANT_COLOR.text, "",                        ColorCodesManager.replaceColorCodesInString("&fОставь пустым, если хочешь радужный\nВводи в цвет в таком формате: &a#00ff00&7, или &9#4287f5 &7(можешь загуглить)"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.NAMEPLATE_TEAM_COLOR.text, false,                        ColorCodesManager.replaceColorCodesInString("&fПоставь &atrue&f, если хочешь чтоб твой ник был цвета твоей команды"));
         
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.RAINBOW_SPEED.text, 1,                        ColorCodesManager.replaceColorCodesInString("&fСкорость переливания радуги\n&fСтавь от &e1 &fдо &e100 &7(рекомендую около 10)"));
         
@@ -389,27 +448,44 @@ public class Main {
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.GENERATOR_TIMERS_POSITION.text, 2,                        ColorCodesManager.replaceColorCodesInString("&fСтавь от &e1 &fдо &e4&f. Это в каком углу будут таймера\n\n&b1 &7- &eлевый верхний\n&b2 &7- &eправый верхний\n&b3 &7- &eправый нижний\n&b4 &7- &eлевый нижний\n"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.GENERATOR_TIMERS_TIMELINE.text, false,                        ColorCodesManager.replaceColorCodesInString("&fВключи, посмотри. Это временная полоса игры, как компас"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.GENERATOR_TIMERS_TIMELINE_WIDTH.text, 75,                        ColorCodesManager.replaceColorCodesInString("&fСтавь от &e50 &fдо &e100&f. Это ширина таймлайна в процентах от ширины экрана"));
-                       
-        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BRO_TAB_LIST.text, true,                        ColorCodesManager.replaceColorCodesInString("&fВнизу по центру будут игроки с модом отдельно"));
+                               
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.CROSSHAIR_BLOCKS_COUNT.text, true,                        ColorCodesManager.replaceColorCodesInString("&fЕсли у тебя будет меньше 6 блоков в слоте, и ты будешь строиться, появится цифра над твоим прицелом. Это удобно, чтоб не отводить взгляд во время строительства"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.TAKE_BLOCKS_FROM_MAX_SLOT.text, false,                        ColorCodesManager.replaceColorCodesInString("&fЕсли у тебя будет в хотбаре больше 1 слота с блоками, будет выбираться слот как можно правее"));
+        
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.PEARL_PREDICTION.text, true,                        ColorCodesManager.replaceColorCodesInString("&fЕсли у тебя будет перл в руке, то будет показана &aзеленая &7(если попадаешь) &fили &cкрасная зона&f. Так же будет показано куда летит перл"));
         prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.FIREBALL_PREDICTION.text, true,                        ColorCodesManager.replaceColorCodesInString("&fЕсли будут лететь фаерболы, то будет показано куда он летит"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.FIREBALL_SPREAD.text, true,                        ColorCodesManager.replaceColorCodesInString("&fЕсли взять в руки фаербол, то будет на месте прицела 3 круга разных цветов:"
+        		+ "\n &cКрасный &7- &fшанс попадания &c100%"
+        		+ "\n &eЖелтый  &7- &fшанс попадания &e50%"
+        		+ "\n &aЗеленый &7- &fшанс попадания &a25%"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.FIREBALL_SPREAD_OFFSET_X.text, true,                        ColorCodesManager.replaceColorCodesInString("&fОригинальный майнкрафт прицел немного смещен право на пару пикселей, по этому чтоб центр кружечка был идеально по центру прицела, можно его немного сместить. Если ты &aпользуешься модом &fна прицел, у тебя может быть кружочек не очень по центру, по этому &aвыключи эту опцию&f"));
         
-        
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.NICK_CHANGER.text, "",                        ColorCodesManager.replaceColorCodesInString("&fРаботает только у тебя, другие видят твой РЕАЛЬНЫЙ ник! Оставь пустым, если хочешь выключить. Можешь писать что хочешь, даже с пробелами)\n\n&c&lРАБОТАЕТ ТОЛЬКО С УЛУЧШЕННЫМ ЧАТОМ!"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.AUTO_LOGIN_PWD.text, "",                        ColorCodesManager.replaceColorCodesInString("&fЕсли тебе лень вписывать свой пароль через &e/l &b1234 &fможешь написать его тут, и мод будет вводить команду за тебя. Пароль никуда не отправляется и &cХРАНИТСЯ ТОЛЬКО У ТЕБЯ&f. Если не хочешь - оставь пустым"));
+        prop = config.get(Configuration.CATEGORY_CLIENT, CONFIG_MSG.BETTER_TAB_CROSSED_NICKNAMES.text, true,                        ColorCodesManager.replaceColorCodesInString("&fДля серверов на виживании можно выключить, или если тебе не нравится что зачеркнуто"));
         
         config.save();
     }
     
-    public static void saveConfig() {
-    	config.save();
+    public static void saveConfig() { 
+    	config.save();	
+    }
+    
+    public static void readNickChanger() {
+    	clientConfig.get(CONFIG_MSG.NICK_CHANGER.text).set(ColorCodesManager.replaceColorCodesInString(clientConfig.get(CONFIG_MSG.NICK_CHANGER.text).getString()));
+    	Property s = clientConfig.get(CONFIG_MSG.NICK_CHANGER.text);
+    	if (s == null || s.getString() == null) {
+    		chatListener.nickChanger = null;
+    		return;
+    	}
+    	chatListener.nickChanger = s.getString();
     }
     
     private static long time_last_update = 0;
     @SubscribeEvent
     public void onConfigChange(ConfigChangedEvent event) throws IllegalAccessException {
         if(configChangedEventModIDField.get(event).equals(MODID)) {
-            config.save();
+        	saveConfig();
             updateAllBooleans();
             
             Date date = new Date();
@@ -424,7 +500,7 @@ public class Main {
     	chatListener.IS_MOD_ACTIVE = getConfigBool(CONFIG_MSG.ENABLE_BETTER_CHAT);
         
         myTickEvent.updateHintsBooleans();
-        minimap.updateBooleans();
+        minimap.updateBooleans();                    
         generatorTimers.updateBooleans();
         particleController.updateBooleans();
         guiOnScreen.updateBooleans();
@@ -432,6 +508,7 @@ public class Main {
         playerFocus.updateBooleans();
         bedwarsMeow.updateBooleans();
         particleTrail.updateBooleans();
+        hintsBaseRadar.updateBooleans();
         rainbowColorSynchronizer.updateBooleans();
         shopManager.updateBooleans();
         guiBedESP.updateBooleans();
@@ -442,7 +519,12 @@ public class Main {
         takeMaxSlotBlocks.updateBooleans();
         trajectoryPearl.updateBooleans();
         trajectoryFireball.updateBooleans();
+        fireballSpread.updateBooleans();
+        zeroDeathHandler.updateBooleans();
+        rotateBind.updateBooleans();
+        namePlateRenderer.updateBooleans();
         readCommandRainbowMessage();
+        readNickChanger();
     }
 
     @Mod.EventHandler
@@ -499,9 +581,13 @@ public class Main {
          takeMaxSlotBlocks = new TakeMaxSlotBlocks(); 
          trajectoryPearl = new TrajectoryPearl(); 
          trajectoryFireball = new TrajectoryFireball(); 
+         fireballSpread = new FireballSpread(); 
+         zeroDeathHandler = new ZeroDeathHandler(); 
+         rotateBind = new RotateBind(); 
          freezeClutch = new FreezeClutch(); 
          lightningLocator = new LightningLocator();
          lobbyFly = new LobbyFly();
+         fileNicknamesManager = new FileNicknamesManager();
          new HintsFinder();
          
          //fileManager.clearLog();
@@ -528,8 +614,11 @@ public class Main {
          MinecraftForge.EVENT_BUS.register(takeMaxSlotBlocks);
          MinecraftForge.EVENT_BUS.register(trajectoryPearl);
          MinecraftForge.EVENT_BUS.register(trajectoryFireball);
+         MinecraftForge.EVENT_BUS.register(fireballSpread);
          MinecraftForge.EVENT_BUS.register(lightningLocator);
          MinecraftForge.EVENT_BUS.register(lobbyFly);
+         MinecraftForge.EVENT_BUS.register(zeroDeathHandler);
+         MinecraftForge.EVENT_BUS.register(rotateBind);
          
          
          
@@ -539,7 +628,10 @@ public class Main {
         commandRainbowMessageSetter = new CommandRainbowMessageSetter();
         commandDexlandMeowSpoof = new CommandDexlandMeowSpoof();
         commandEnableESP = new CommandEnableESP();
+        commandNameChanger = new CommandNameChanger();
         commandBWDiscord = new CommandBWDiscord();
+        commandMute = new CommandMute(this);
+        commandFriends = new CommandFriends(this);
         commandHistoryShop = new CommandHistoryShop(this);
         commandFindPlayerByName = new CommandFindPlayerByName();
      	ClientCommandHandler.instance.registerCommand(commandHintsFinderLookAtPlayer);
@@ -550,18 +642,22 @@ public class Main {
      	ClientCommandHandler.instance.registerCommand(commandRainbowMessageSetter);
      	ClientCommandHandler.instance.registerCommand(commandDexlandMeowSpoof);
      	ClientCommandHandler.instance.registerCommand(commandEnableESP);
+     	ClientCommandHandler.instance.registerCommand(commandNameChanger);
      	ClientCommandHandler.instance.registerCommand(commandBWDiscord);
+     	ClientCommandHandler.instance.registerCommand(commandMute);
+     	ClientCommandHandler.instance.registerCommand(commandFriends);
      	
      	ClientCommandHandler.instance.registerCommand(new CommandModHelp(this, "/bwbro"));
      	ClientCommandHandler.instance.registerCommand(new CommandModHelp(this, "/bedwarswbro"));
      	ClientCommandHandler.instance.registerCommand(new CommandModHelp(this, "/bro"));
      	
      	readCommandRainbowMessage();
-     	
+     	     	
      	baseProps = new BaseProps();
      	baseProps.readProps();
+     	baseProps.readMessages();
     	
-    	chatListener.IS_MOD_ACTIVE = getConfigBool(CONFIG_MSG.ENABLE_BETTER_CHAT);
+    	updateAllBooleans();
     }
 
     public ConfigCategory getClientConfig() {
@@ -584,6 +680,10 @@ public class Main {
 	public static String getPropModAuthor() { 
 		if (baseProps == null) return null;
     	return baseProps.getModAuthor(); 
+	}
+	public static String getPropAuthorPrefix() { 
+		if (baseProps == null) return null;
+		return baseProps.getModAuthorPrefix(); 
 	}
 	public static ArrayList<String> getPropModBannedUsers() { 
 		if (baseProps == null) return new ArrayList<String>();

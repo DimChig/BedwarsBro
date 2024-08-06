@@ -22,9 +22,9 @@ import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.MyBed;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.Pos;
 import com.dimchig.bedwarsbro.gui.GuiMinimap.PosItem;
-import com.dimchig.bedwarsbro.hints.BWBed;
-import com.dimchig.bedwarsbro.hints.HintsFinder;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.BWBed;
+import com.dimchig.bedwarsbro.stuff.HintsFinder;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
@@ -71,11 +71,13 @@ public class GuiPlayerFocus {
 	public static boolean isInvulnerableTimerSoundsActive = false;
 	public static boolean isNamePlateActive = false;
 	public static boolean isNamePlateRainbowActive = false;
+	public static boolean isNamePlateTeamColorActive = false;
 	public static boolean isResourcesHologramActive = false;
 	public static int rainbowSpeed = 1;
 	public static String namePlateCustomColor = "";
 	
 	public static boolean isT_Active = false;
+	public static boolean isLookAtBaseActive = false;
 	//private static Robot robot;
 	
 	public GuiPlayerFocus() {
@@ -93,6 +95,7 @@ public class GuiPlayerFocus {
 		this.isNamePlateRainbowActive = HintsValidator.isNamePlateRainbowActive();
 		this.rainbowSpeed = HintsValidator.getRainbowSpeed();
 		this.namePlateCustomColor = HintsValidator.getNamePlateCustomColor();
+		this.isNamePlateTeamColorActive = HintsValidator.getNamePlateTeamColor();
 		this.isResourcesHologramActive = HintsValidator.isResourcesHologramActive();
 	}
 	
@@ -144,8 +147,7 @@ public class GuiPlayerFocus {
 	}*/
 	
 	@SubscribeEvent
-	public void onRenderWorldLastEvent(RenderWorldLastEvent event) {
-		
+	public void onRenderWorldLastEvent(RenderWorldLastEvent event) {		
 		float partialTicks = event.partialTicks;
 		
 		EntityPlayerSP player = mc.thePlayer;
@@ -174,8 +176,19 @@ public class GuiPlayerFocus {
         //if (true) return;
         
         if (this.isNamePlateActive) {
-        	Main.namePlate.draw(pos, isNamePlateRainbowActive, rainbowSpeed, namePlateCustomColor);
+        	Main.namePlate.draw(pos, isNamePlateRainbowActive, isNamePlateTeamColorActive, rainbowSpeed, namePlateCustomColor);
         }
+        
+        if (isLookAtBaseActive) {
+			if (Main.chatListener.GAME_BED == null) {
+				mc.thePlayer.setAngles(mc.thePlayer.cameraYaw - 360 + mc.theWorld.rand.nextInt(720), mc.thePlayer.cameraPitch);    
+			} else {
+				HintsFinder.lookAtPlayer(d0, d1 + player.getEyeHeight(), d2, Main.chatListener.GAME_BED.part1_posX, Main.chatListener.GAME_BED.part1_posY, Main.chatListener.GAME_BED.part1_posZ);				//
+			}
+		}
+        
+        Main.rotateBind.rotate();
+        
         
         if (this.isResourcesHologramActive) {
         	Main.guiResourceHologram.draw(pos);
@@ -243,6 +256,8 @@ public class GuiPlayerFocus {
 			}
 		}
 
+		setLineColor(new Color(1f, 1f, 1f, 1f));
+		
 		GL11.glPopAttrib();
 		GL11.glPopMatrix();
 		

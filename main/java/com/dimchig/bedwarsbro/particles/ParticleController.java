@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import com.dimchig.bedwarsbro.CustomScoreboard.TEAM_COLOR;
-import com.dimchig.bedwarsbro.hints.HintsValidator;
+import com.dimchig.bedwarsbro.stuff.HintsValidator;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.EntityFX;

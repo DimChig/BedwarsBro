@@ -6,9 +6,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.dimchig.bedwarsbro.Main.CONFIG_MSG;
-import com.dimchig.bedwarsbro.hints.BWBed;
-import com.dimchig.bedwarsbro.hints.HintsBedScanner;
 import com.dimchig.bedwarsbro.serializer.MySerializer;
+import com.dimchig.bedwarsbro.stuff.BWBed;
+import com.dimchig.bedwarsbro.stuff.HintsBedScanner;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,6 +25,7 @@ public class LoginHandler {
 	@SubscribeEvent
 	public void onJoinServer(FMLNetworkEvent.ClientConnectedToServerEvent e) {
 		Main.baseProps.readProps();
+		Main.baseProps.readMessages();
 		Main.updateAllBooleans();
 		
 		new Timer().schedule( 

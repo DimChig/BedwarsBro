@@ -78,10 +78,11 @@ public class CommandRainbowMessage extends CommandBase {
 		
 		
 		//check hub
-		if (Main.shopManager.findItemInHotbar("ыбор лобби") == -1 && isGlobal) str = "!" + str;
+		if (Main.shopManager.findItemInInventory("ыбор лобби") == -1 && isGlobal) str = "!" + str;
 		
 		//ChatSender.addClickSuggestAndHoverText(str, "&eЛКМ &f - скопировать", str);
 		Minecraft.getMinecraft().thePlayer.sendChatMessage(str);
+		System.out.println(str);
 	}
 	
 	//public static String[] color_codes = new String[] {"c", "6", "e", "a", "b", "9", "d"};
