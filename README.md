@@ -7,7 +7,7 @@ BedwarsBro is a mod for Minecraft (for version ForgeOptifine 1.8.9) that introdu
 
 **Development Journey:**
 - **Creation:** I developed this mod at the age of **16**.
-- **Time Investment**: The project took approximately 3 months to complete, with daily coding sessions lasting 3-8 hours.
+- **Time Investment**: The project took approximately 6 months to complete, with daily coding sessions lasting 3-8 hours.
 
 **Community Impact:**
 - **User Engagement:** The mod has been downloaded by over **50.000** players, according to my download statistics.
