@@ -15,3 +15,5 @@ BedwarsBro is a mod for Minecraft (for version ForgeOptifine 1.8.9) that introdu
 
 **Additional Resources:**
 - **Demonstration:** I created a YouTube video showcasing the mod's features, though it is currently available only in Russian<br><a href='https://www.youtube.com/watch?v=0qWJpeQj83E'>Watch the video here</a>
+
+![Video Thumbnail](./VideoThumbnail.jpg) 
